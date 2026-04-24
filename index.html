@@ -1,157 +1,178 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUNAS STUDIO</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DUNAS STUDIO - Sistema</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    :root { --d-blue: #1a237e; --d-red: #d32f2f; }
+    body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding-bottom: 30px; }
+    .nav-pills .nav-link.active { background: var(--d-blue) !important; }
+    .nav-link { color: var(--d-blue); font-weight: 600; }
+    .card { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .btn-primary { background: var(--d-blue); border: none; }
+    .btn-primary:hover { background: #0d145a; }
+  </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
-    <nav class="bg-[#800000] text-white p-4 flex justify-between items-center shadow-lg">
-        <div class="font-bold tracking-widest uppercase">DUNAS STUDIO</div>
-        <div class="space-x-6 text-sm font-bold">
-            <button onclick="showTab('ventas')">Ventas</button>
-            <button onclick="showTab('clientes')">Clientes</button>
-            <button onclick="showTab('modelos')">Modelos</button>
+<body>
+
+  <div class="container mt-4">
+    <div class="text-center mb-4"><h3 style="color: var(--d-blue); font-weight: 800;">DUNAS STUDIO</h3></div>
+
+    <ul class="nav nav-pills nav-fill bg-white p-1 rounded-pill mb-4 shadow-sm" id="menu">
+      <li class="nav-item"><button class="nav-link active rounded-pill" onclick="showTab('nota')">Nota</button></li>
+      <li class="nav-item"><button class="nav-link rounded-pill" onclick="showTab('historial')">Historial</button></li>
+      <li class="nav-item"><button class="nav-link rounded-pill" onclick="showTab('clientes')">Clientes</button></li>
+    </ul>
+
+    <div id="tab-nota" class="tab-view">
+      <div class="card p-4 shadow-sm">
+        <label class="small fw-bold text-muted mb-1">SELECCIONAR CLIENTE</label>
+        <select id="selCliente" class="form-select mb-2" onchange="updateClientePreview()"></select>
+        <div id="prevC" class="small text-muted mb-3 ms-2"></div>
+        
+        <label class="small fw-bold text-muted mb-1">TRABAJO / DESCRIPCIÓN</label>
+        <input type="text" id="v_trabajo" placeholder="Ej: Fabricación de palas tejidas" class="form-control mb-4">
+
+        <div id="items"></div>
+        
+        <button class="btn btn-outline-primary btn-sm w-100 mb-4" onclick="addItem()">+ Agregar Concepto</button>
+        
+        <div class="text-end mb-3">
+            <span class="h4 fw-bold text-danger">Total: $<span id="totalDisplay">0.00</span></span>
         </div>
-    </nav>
+        
+        <button class="btn btn-primary w-100 p-3 fw-bold shadow" id="btnGen" onclick="genNota()">GENERAR PDF Y GUARDAR</button>
+      </div>
+    </div>
 
-    <div id="ventas" class="tab-content p-4 max-w-5xl mx-auto">
-        <div class="bg-white p-8 rounded-xl shadow-xl">
-            <h2 class="text-2xl font-bold mb-6 text-slate-800">Nueva Nota de Venta</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <select id="v_cliente" class="border-2 p-3 rounded-lg focus:border-red-500 outline-none"></select>
-                <input type="text" id="v_trabajo" placeholder="Trabajo (ej: Fabricación de palas)" class="border-2 p-3 rounded-lg">
-            </div>
-
-            <div class="flex gap-2 mb-6">
-                <select id="v_modelo_sel" class="flex-1 border-2 p-3 rounded-lg"></select>
-                <button onclick="addItem()" class="bg-blue-600 text-white px-8 rounded-lg font-bold hover:bg-blue-700">+ Agregar</button>
-            </div>
-
-            <table class="w-full text-left">
-                <thead class="text-slate-400 text-xs uppercase border-b">
-                    <tr>
-                        <th class="py-3">Descripción</th>
-                        <th class="text-center">Cant.</th>
-                        <th class="text-right">Precio</th>
-                        <th class="text-right">Total</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="v_tabla" class="divide-y"></tbody>
-            </table>
-
-            <div class="flex flex-col items-end mt-8 border-t pt-6">
-                <div class="text-red-600 font-bold text-3xl mb-4">Total: $<span id="v_total">0.00</span></div>
-                <button onclick="processSale()" id="btn_sale" class="bg-red-600 text-white px-10 py-4 rounded-xl font-bold text-lg hover:scale-105 transition shadow-lg w-full md:w-auto uppercase">GENERAR PDF Y GUARDAR</button>
-            </div>
+    <div id="tab-historial" class="tab-view d-none">
+        <div class="card p-3">
+            <p class="text-center text-muted">Las notas se guardan directamente en tu Google Sheet y Drive.</p>
         </div>
     </div>
 
-    <div id="clientes" class="tab-content hidden p-8 text-center text-gray-500">Administración de Clientes (Cargando...)</div>
-    <div id="modelos" class="tab-content hidden p-8 text-center text-gray-500">Administración de Modelos (Cargando...)</div>
+    <div id="tab-clientes" class="tab-view d-none">
+        <div id="listaC" class="list-group"></div>
+    </div>
+  </div>
 
-    <script>
-        const API = "https://script.google.com/macros/s/AKfycbx8zhRhT578V1D94Gba6mkVw2Sa370_wgbHUJmQrGPtQfpFDO9SaigQy5W4DCS_-yAUzQ/exec";
-        let db = { clientes: [], modelos: [] };
-        let cart = [];
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbx8zhRhT578V1D94Gba6mkVw2Sa370_wgbHUJmQrGPtQfpFDO9SaigQy5W4DCS_-yAUzQ/exec";
+    let appD = { clientes: [], modelos: [] };
 
-        async function load() {
-            try {
-                const res = await fetch(API);
-                db = await res.json();
-                renderUI();
-            } catch (e) {
-                console.log("Error al cargar:", e);
-            }
-        }
+    window.onload = load;
 
-        function renderUI() {
-            const selC = document.getElementById('v_cliente');
-            const selM = document.getElementById('v_modelo_sel');
-            
-            // Usamos nombres de propiedades genéricos para evitar errores de mapeo
-            selC.innerHTML = db.clientes.map((c, i) => `<option value="${i}">${c.nombre || c.Nombre || 'S/N'}</option>`).join('');
-            selM.innerHTML = db.modelos.map((m, i) => `<option value="${i}">${m.nombre || m.Nombre || m.Modelo || 'Modelo'}</option>`).join('');
-        }
+    async function load() {
+      try {
+        const response = await fetch(API_URL + "?action=getData"); // Usando GET para traer datos
+        appD = await response.json();
+        renderAll();
+      } catch (e) {
+        console.error("Error cargando datos:", e);
+      }
+    }
 
-        function addItem() {
-            const m = db.modelos[document.getElementById('v_modelo_sel').value];
-            cart.push({ 
-                modelo: m.nombre || m.Nombre || m.Modelo, 
-                descripcion: '', 
-                precio: 0, 
-                cantidad: 1, 
-                subtotal: 0 
+    function renderAll() {
+      const sel = document.getElementById('selCliente');
+      sel.innerHTML = '<option value="">Selecciona Cliente...</option>' + 
+        appD.clientes.map((c,i) => `<option value="${i}">${c.nombre}</option>`).join('');
+      
+      document.getElementById('listaC').innerHTML = appD.clientes.map(c => `
+        <div class="list-group-item mb-2 border-0 shadow-sm rounded-3">
+          <strong>${c.nombre}</strong><br><small class="text-muted">${c.destino} | ${c.tel}</small>
+        </div>`).join('');
+
+      if(document.getElementById('items').innerHTML === "") addItem();
+    }
+
+    function addItem() {
+      const div = document.createElement('div');
+      div.className = 'card p-3 mb-3 border-light bg-light';
+      div.innerHTML = `
+        <select class="form-select border-0 fw-bold mb-1 bg-transparent">
+            ${appD.modelos.map(m => `<option>${m.nombre}</option>`).join('')}
+        </select>
+        <input type="text" class="form-control form-control-sm border-0 mb-2" placeholder="Detalles (ej: COLOR NEGRO)">
+        <div class="row g-2">
+            <div class="col-6"><input type="number" class="form-control" placeholder="Cant." onchange="calcTotal()"></div>
+            <div class="col-6"><input type="number" class="form-control" placeholder="Precio" onchange="calcTotal()"></div>
+        </div>`;
+      document.getElementById('items').appendChild(div);
+    }
+
+    function calcTotal() {
+        let t = 0;
+        document.querySelectorAll('#items > div').forEach(d => {
+            const q = parseFloat(d.querySelectorAll('input')[1].value) || 0;
+            const p = parseFloat(d.querySelectorAll('input')[2].value) || 0;
+            t += q * p;
+        });
+        document.getElementById('totalDisplay').innerText = t.toFixed(2);
+    }
+
+    async function genNota() {
+      const ci = document.getElementById('selCliente').value;
+      if(!ci) return alert("Selecciona un cliente");
+      
+      const btn = document.getElementById('btnGen');
+      btn.disabled = true;
+      btn.innerText = "GENERANDO...";
+
+      const items = [];
+      document.querySelectorAll('#items > div').forEach(d => {
+        const q = parseFloat(d.querySelectorAll('input')[1].value);
+        const p = parseFloat(d.querySelectorAll('input')[2].value);
+        if(q && p) {
+            items.push({
+                modelo: d.querySelector('select').value, 
+                desc: d.querySelectorAll('input')[0].value, 
+                cantidad: q, 
+                precio: p, 
+                subtotal: q*p
             });
-            renderCart();
         }
+      });
 
-        function renderCart() {
-            let total = 0;
-            document.getElementById('v_tabla').innerHTML = cart.map((it, i) => {
-                total += it.subtotal;
-                return `<tr class="text-sm">
-                    <td class="py-4">
-                        <b>${it.modelo}</b><br>
-                        <input type="text" placeholder="Detalle..." onchange="cart[${i}].descripcion=this.value" class="text-xs w-full text-blue-500 outline-none bg-transparent">
-                    </td>
-                    <td class="text-center"><input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-16 border rounded text-center"></td>
-                    <td class="text-right font-bold">$ <input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-20 border rounded text-right"></td>
-                    <td class="text-right font-bold">$ ${it.subtotal.toFixed(2)}</td>
-                    <td class="text-center"><button onclick="cart.splice(${i},1); renderCart();" class="text-red-400">✕</button></td>
-                </tr>`;
-            }).join('');
-            document.getElementById('v_total').innerText = total.toFixed(2);
-        }
+      const payload = {
+        clienteNombre: appD.clientes[ci].nombre,
+        clienteDestino: appD.clientes[ci].destino,
+        clienteTel: appD.clientes[ci].tel,
+        trabajoDesc: document.getElementById('v_trabajo').value || "Fabricación de palas tejidas",
+        items: items,
+        totalFinal: parseFloat(document.getElementById('totalDisplay').innerText)
+      };
 
-        function updateCart(i, field, val) {
-            cart[i][field] = parseFloat(val || 0);
-            cart[i].subtotal = cart[i].cantidad * cart[i].precio;
-            renderCart();
-        }
+      try {
+        // Enviar a Apps Script
+        await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ action: 'createSale', payload: payload })
+        });
+        
+        alert("¡Venta registrada con éxito! El PDF se guardó en tu Drive.");
+        location.reload(); 
+      } catch (e) {
+        alert("Error al conectar con el servidor.");
+        btn.disabled = false;
+      }
+    }
 
-        async function processSale() {
-            const btn = document.getElementById('btn_sale');
-            const cliente = db.clientes[document.getElementById('v_cliente').value];
-            
-            const payload = {
-                cliente: cliente.nombre || cliente.Nombre,
-                destino: cliente.destino || cliente.Destino || "",
-                tel: cliente.tel || cliente.Teléfono || cliente.Telefono || "",
-                trabajoDesc: document.getElementById('v_trabajo').value,
-                items: cart,
-                total: document.getElementById('v_total').innerText
-            };
+    function updateClientePreview() {
+      const i = document.getElementById('selCliente').value;
+      document.getElementById('prevC').innerText = i ? appD.clientes[i].destino + " | " + appD.clientes[i].tel : "";
+    }
 
-            btn.disabled = true; btn.innerText = "PROCESANDO...";
-
-            try {
-                const res = await fetch(API, {
-                    method: 'POST',
-                    mode: 'no-cors', // Mantiene la compatibilidad con Google Scripts
-                    body: JSON.stringify({ action: 'createSale', payload })
-                });
-
-                // Como usamos no-cors no podemos leer la respuesta, 
-                // pero enviamos una señal de éxito al usuario.
-                alert("Venta enviada correctamente. Revisa tu carpeta de Drive para ver el PDF.");
-                cart = []; renderCart();
-            } catch (err) {
-                alert("Error al procesar la venta.");
-            } finally {
-                btn.disabled = false; btn.innerText = "GENERAR PDF Y GUARDAR";
-            }
-        }
-
-        function showTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        load();
-    </script>
+    function showTab(tab) {
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.add('d-none'));
+      document.getElementById('tab-' + tab).classList.remove('d-none');
+      document.querySelectorAll('#menu .nav-link').forEach(l => l.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
 </body>
 </html>
