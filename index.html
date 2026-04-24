@@ -3,25 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUNAS Sistema de Notas</title>
+    <title>DUNAS - Sistema de Notas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden; /* Evita doble scroll */
-        }
-        iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
+        .loader { border-top-color: #d9534f; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
-    <iframe src="https://script.google.com/macros/s/AKfycbx7GWDPlbi1j4vOg8L1l38kKg644xjNL1MXKMju8SGa9UeD4ba-5G0fyUIE-pVQSgRhFQ/exec"></iframe>
+<body class="bg-gray-100 p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-xl p-6">
+        
+        <div class="flex justify-between items-center mb-8 border-b pb-4">
+            <img src="logo.png" alt="DUNAS" class="h-12">
+            <h1 class="text-2xl font-bold text-red-600 uppercase">Nota de Venta</h1>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label class="block font-bold mb-1">Cliente:</label>
+                <select id="selectCliente" class="w-full border p-2 rounded bg-white">
+                    <option>Cargando clientes...</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-bold mb-1">Modelo:</label>
+                <select id="selectProducto" class="w-full border p-2 rounded bg-white">
+                    <option>Cargando modelos...</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto mb-6">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2 border">Descripción</th>
+                        <th class="p-2 border">Cant.</th>
+                        <th class="p-2 border">Precio</th>
+                        <th class="p-2 border">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaItems">
+                    </tbody>
+            </table>
+            <button onclick="agregarItem()" class="mt-2 bg-blue-500 text-white px-4 py-1 rounded text-sm hover:bg-blue-600">+ Agregar Fila</button>
+        </div>
+
+        <div class="text-right text-xl font-bold text-red-600 mb-6">
+            Total: $<span id="totalVenta">0.00</span>
+        </div>
+
+        <button id="btnGenerar" onclick="enviarVenta()" class="w-full bg-red-600 text-white font-bold py-3 rounded hover:bg-red-700 transition">
+            GENERAR NOTA Y PDF
+        </button>
+
+        <div id="status" class="hidden mt-4 p-3 rounded text-center font-bold"></div>
+    </div>
+
+    <script>
+        // CAMBIA ESTO POR TU URL DE APPS SCRIPT
+        const API_URL = "https://script.google.com/macros/s/AKfycbx8zhRhT578V1D94Gba6mkVw2Sa370_wgbHUJmQrGPtQfpFDO9SaigQy5W4DCS_-yAUzQ/exec";
+        let db = { clientes: [], productos: [] };
+        let itemsVenta = [];
+
+        async function init() {
+            try {
+                const res = await fetch(API_URL);
+                db = await res.json();
+                
+                const selC = document.getElementById('selectCliente');
+                selC.innerHTML = db.clientes.map((c, i) => `<option value="${i}">${c.nombre}</option>`).join('');
+                
+                const selP = document.getElementById('selectProducto');
+                selP.innerHTML = db.productos.map((p, i) => `<option value="${i}">${p.nombre} ($${p.precio})</option>`).join('');
+                
+                agregarItem(); // Iniciar con una fila
+            } catch (e) {
+                alert("Error cargando datos. Verifica la API_URL.");
+            }
+        }
+
+        function agregarItem() {
+            const pIdx = document.getElementById('selectProducto').value;
+            const prod = db.productos[pIdx] || { nombre: "Producto", precio: 0 };
+            
+            const item = { modelo: prod.nombre, cantidad: 1, precio: prod.precio, subtotal: prod.precio };
+            itemsVenta.push(item);
+            renderTabla();
+        }
+
+        function renderTabla() {
+            const tbody = document.getElementById('tablaItems');
+            let total = 0;
+            tbody.innerHTML = itemsVenta.map((it, idx) => {
+                total += parseFloat(it.subtotal);
+                return `
+                <tr>
+                    <td class="p-2 border">${it.modelo}</td>
+                    <td class="p-2 border"><input type="number" value="${it.cantidad}" onchange="updateItem(${idx}, 'cantidad', this.value)" class="w-16 border"></td>
+                    <td class="p-2 border">$${it.precio}</td>
+                    <td class="p-2 border">$${it.subtotal}</td>
+                </tr>`;
+            }).join('');
+            document.getElementById('totalVenta').innerText = total.toFixed(2);
+        }
+
+        function updateItem(idx, campo, valor) {
+            itemsVenta[idx][campo] = valor;
+            itemsVenta[idx].subtotal = itemsVenta[idx].cantidad * itemsVenta[idx].precio;
+            renderTabla();
+        }
+
+        async function enviarVenta() {
+            const btn = document.getElementById('btnGenerar');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.innerText = "PROCESANDO...";
+            
+            const payload = {
+                cliente: db.clientes[document.getElementById('selectCliente').value],
+                items: itemsVenta,
+                total: document.getElementById('totalVenta').innerText
+            };
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                
+                if(result.status === "success") {
+                    status.className = "mt-4 p-3 rounded text-center font-bold bg-green-100 text-green-700";
+                    status.innerHTML = `Venta guardada. <a href="${result.url}" target="_blank" class="underline">Ver PDF aquí</a>`;
+                    status.classList.remove('hidden');
+                    window.open(result.url, '_blank');
+                }
+            } catch (e) {
+                alert("Error al enviar. Revisa la consola.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "GENERAR NOTA Y PDF";
+            }
+        }
+
+        init();
+    </script>
 </body>
 </html>
