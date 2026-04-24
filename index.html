@@ -3,127 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUNAS STUDIO</title>
+    <title>DUNAS STUDIO - Gestión</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-red-700 text-white p-4 shadow-lg flex justify-between items-center">
-        <span class="font-bold text-xl">DUNAS STUDIO</span>
-        <div class="space-x-4">
-            <button onclick="showTab('ventas')" class="hover:underline">Ventas</button>
-            <button onclick="showTab('clientes')" class="hover:underline">Clientes</button>
-            <button onclick="showTab('productos')" class="hover:underline">Modelos</button>
+<body class="bg-slate-100 min-h-screen">
+    <nav class="bg-red-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-10">
+        <h1 class="font-bold text-xl tracking-wider">DUNAS STUDIO</h1>
+        <div class="flex gap-4">
+            <button onclick="showTab('ventas')" class="px-3 py-1 rounded hover:bg-red-700 transition">Ventas</button>
+            <button onclick="showTab('clientes')" class="px-3 py-1 rounded hover:bg-red-700 transition">Clientes</button>
+            <button onclick="showTab('productos')" class="px-3 py-1 rounded hover:bg-red-700 transition">Modelos</button>
         </div>
     </nav>
 
-    <div id="ventas" class="tab-content p-6 max-w-5xl mx-auto">
-        <h2 class="text-2xl font-bold mb-4">Nueva Venta</h2>
-        <div class="bg-white p-6 rounded shadow grid grid-cols-1 md:grid-cols-2 gap-4">
-            <select id="v_cliente" class="border p-2 rounded"></select>
-            <div class="flex space-x-2">
-                <select id="v_prod" class="border p-2 rounded flex-1"></select>
-                <button onclick="addItem()" class="bg-blue-600 text-white px-4 py-2 rounded">+ Añadir</button>
+    <main id="ventas" class="tab-content p-4 max-w-5xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Nueva Nota de Venta</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Seleccionar Cliente:</label>
+                    <select id="v_cliente" class="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-red-500 outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Agregar Modelo:</label>
+                    <div class="flex gap-2">
+                        <select id="v_prod" class="flex-1 border-2 border-gray-200 p-3 rounded-lg focus:border-red-500 outline-none"></select>
+                        <button onclick="addItem()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md">+ Agregar</button>
+                    </div>
+                </div>
             </div>
-            <div class="md:col-span-2 overflow-x-auto">
-                <table class="w-full border mt-4">
-                    <thead><tr class="bg-gray-100"><th class="p-2 border">Modelo</th><th class="p-2 border">Cant</th><th class="p-2 border">Total</th></tr></thead>
-                    <tbody id="v_tabla"></tbody>
+
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-700 uppercase text-xs">
+                            <th class="p-3 text-left border">Modelo</th>
+                            <th class="p-3 text-center border w-24">Cant.</th>
+                            <th class="p-3 text-right border w-32">Precio Uni.</th>
+                            <th class="p-3 text-right border w-32">Subtotal</th>
+                            <th class="p-3 text-center border w-16"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="v_tabla" class="text-gray-600"></tbody>
                 </table>
-                <div class="text-right text-xl font-bold mt-4 text-red-700">Total: $<span id="v_total">0</span></div>
-                <button onclick="processSale()" id="btn_sale" class="w-full mt-4 bg-red-600 text-white py-3 rounded font-bold">GENERAR NOTA PDF</button>
+            </div>
+
+            <div class="mt-6 flex flex-col items-end gap-4">
+                <div class="text-3xl font-black text-red-700">Total: $<span id="v_total">0.00</span></div>
+                <button onclick="processSale()" id="btn_sale" class="bg-red-600 text-white px-10 py-4 rounded-xl font-black text-lg hover:bg-red-700 transition shadow-lg w-full md:w-auto">
+                    GENERAR PDF Y GUARDAR VENTA
+                </button>
             </div>
         </div>
+    </main>
+
+    <div id="clientes" class="tab-content hidden p-4 max-w-5xl mx-auto">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Mis Clientes</h2>
+                <button onclick="openModal('c')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">+ Nuevo Cliente</button>
+            </div>
+            <div id="t_clientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
     </div>
 
-    <div id="clientes" class="tab-content hidden p-6 max-w-5xl mx-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">Gestión de Clientes</h2>
-            <button onclick="openModal('c')" class="bg-green-600 text-white px-4 py-2 rounded">+ Nuevo Cliente</button>
+    <div id="productos" class="tab-content hidden p-4 max-w-5xl mx-auto">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Catálogo de Modelos</h2>
+                <button onclick="openModal('p')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">+ Nuevo Modelo</button>
+            </div>
+            <div id="t_productos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
-        <table class="w-full bg-white shadow rounded overflow-hidden">
-            <thead class="bg-gray-200"><tr><th class="p-3 text-left">Nombre</th><th class="p-3 text-left">Ciudad</th><th class="p-3 text-center">Acciones</th></tr></thead>
-            <tbody id="t_clientes"></tbody>
-        </table>
-    </div>
-
-    <div id="productos" class="tab-content hidden p-6 max-w-5xl mx-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">Gestión de Modelos</h2>
-            <button onclick="openModal('p')" class="bg-green-600 text-white px-4 py-2 rounded">+ Nuevo Modelo</button>
-        </div>
-        <table class="w-full bg-white shadow rounded overflow-hidden">
-            <thead class="bg-gray-200"><tr><th class="p-3 text-left">Modelo</th><th class="p-3 text-left">Precio</th><th class="p-3 text-center">Acciones</th></tr></thead>
-            <tbody id="t_productos"></tbody>
-        </table>
     </div>
 
     <script>
-        const API = "https://script.google.com/macros/s/AKfycbx8zhRhT578V1D94Gba6mkVw2Sa370_wgbHUJmQrGPtQfpFDO9SaigQy5W4DCS_-yAUzQ/exec"; // REEMPLAZA ESTO
+        const API = "https://script.google.com/macros/s/AKfycbx8zhRhT578V1D94Gba6mkVw2Sa370_wgbHUJmQrGPtQfpFDO9SaigQy5W4DCS_-yAUzQ/exec";
         let db = { clientes: [], productos: [] };
         let cart = [];
 
         async function load() {
-            try {
-                const res = await fetch(API);
-                db = await res.json();
-                renderUI();
-            } catch (e) { console.error(e); alert("Error de conexión con la API"); }
+            const res = await fetch(API);
+            db = await res.json();
+            renderUI();
         }
 
         function renderUI() {
-            // Renderizar selects de venta
-            document.getElementById('v_cliente').innerHTML = db.clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
-            document.getElementById('v_prod').innerHTML = db.productos.map((p,i) => `<option value="${i}">${p[0]} ($${p[1]})</option>`).join('');
+            document.getElementById('v_cliente').innerHTML = db.clientes.map(c => `<option value="${c.nombre}">${c.nombre} (${c.ciudad})</option>`).join('');
+            document.getElementById('v_prod').innerHTML = db.productos.map((p,i) => `<option value="${i}">${p.modelo} - $${p.precio}</option>`).join('');
             
-            // Renderizar tablas de gestión
             document.getElementById('t_clientes').innerHTML = db.clientes.map(c => `
-                <tr class="border-t">
-                    <td class="p-3">${c[0]}</td><td class="p-3">${c[1]}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="del('deleteCliente', ${c.index})" class="text-red-600 px-2">Eliminar</button>
-                    </td>
-                </tr>`).join('');
+                <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center">
+                    <div><p class="font-bold text-red-800">${c.nombre}</p><p class="text-xs text-gray-500">${c.ciudad}</p></div>
+                    <button onclick="del('deleteCliente', ${c.index})" class="text-red-500 text-sm font-bold">X</button>
+                </div>`).join('');
             
             document.getElementById('t_productos').innerHTML = db.productos.map(p => `
-                <tr class="border-t">
-                    <td class="p-3">${p[0]}</td><td class="p-3">$${p[1]}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="del('deleteProducto', ${p.index})" class="text-red-600 px-2">Eliminar</button>
-                    </td>
-                </tr>`).join('');
+                <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center">
+                    <div><p class="font-bold text-gray-800">${p.modelo}</p><p class="text-green-600 font-bold">$${p.precio}</p></div>
+                    <button onclick="del('deleteProducto', ${p.index})" class="text-red-500 text-sm font-bold">X</button>
+                </div>`).join('');
         }
 
         function addItem() {
-            const p = db.productos[document.getElementById('v_prod').value];
-            cart.push({ modelo: p[0], precio: p[1], cantidad: 1, subtotal: p[1] });
+            const pIdx = document.getElementById('v_prod').value;
+            const p = db.productos[pIdx];
+            cart.push({ modelo: p.modelo, precio: parseFloat(p.precio), cantidad: 1, subtotal: parseFloat(p.precio) });
+            renderCart();
+        }
+
+        function updateCart(idx, field, value) {
+            cart[idx][field] = parseFloat(value);
+            cart[idx].subtotal = cart[idx].cantidad * cart[idx].precio;
+            renderCart();
+        }
+
+        function removeCart(idx) {
+            cart.splice(idx, 1);
             renderCart();
         }
 
         function renderCart() {
             let total = 0;
             document.getElementById('v_tabla').innerHTML = cart.map((it, i) => {
-                total += parseFloat(it.subtotal);
-                return `<tr><td class="p-2 border">${it.modelo}</td><td class="p-2 border">${it.cantidad}</td><td class="p-2 border">$${it.subtotal}</td></tr>`;
+                total += it.subtotal;
+                return `
+                <tr class="border-b">
+                    <td class="p-3 border">${it.modelo}</td>
+                    <td class="p-3 border"><input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-full text-center border rounded"></td>
+                    <td class="p-3 border text-right"><input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-full text-right border rounded"></td>
+                    <td class="p-3 border text-right font-bold">$${it.subtotal.toFixed(2)}</td>
+                    <td class="p-3 border text-center"><button onclick="removeCart(${i})" class="text-red-500 font-bold">X</button></td>
+                </tr>`;
             }).join('');
-            document.getElementById('v_total').innerText = total;
-        }
-
-        async function del(action, index) {
-            if(!confirm("¿Seguro?")) return;
-            await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload: { index } }) });
-            load();
+            document.getElementById('v_total').innerText = total.toFixed(2);
         }
 
         async function processSale() {
+            if(cart.length === 0) return alert("Agrega modelos a la venta primero.");
             const btn = document.getElementById('btn_sale');
-            btn.disabled = true; btn.innerText = "GENERANDO PDF...";
-            const res = await fetch(API, { method: 'POST', body: JSON.stringify({ 
-                action: 'createSale', 
-                payload: { cliente: { nombre: document.getElementById('v_cliente').value }, items: cart, total: document.getElementById('v_total').innerText } 
-            })});
+            btn.disabled = true; btn.innerText = "PROCESANDO...";
+            
+            const payload = {
+                cliente: db.clientes.find(c => c.nombre === document.getElementById('v_cliente').value),
+                items: cart,
+                total: document.getElementById('v_total').innerText
+            };
+
+            const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'createSale', payload }) });
             const data = await res.json();
-            window.open(data.url, '_blank');
-            cart = []; renderCart(); btn.disabled = false; btn.innerText = "GENERAR NOTA PDF";
+            if(data.status === "success") {
+                window.open(data.url, '_blank');
+                cart = []; renderCart();
+                alert("Venta procesada con éxito.");
+            }
+            btn.disabled = false; btn.innerText = "GENERAR PDF Y GUARDAR VENTA";
         }
 
         function showTab(id) {
@@ -131,14 +166,28 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
-        async function openModal(type) {
-            const val = prompt(`Ingrese los datos separados por coma (Nombre, Dato2):`);
-            if(!val) return;
-            const parts = val.split(',');
-            const action = type === 'c' ? 'upsertCliente' : 'upsertProducto';
-            const payload = type === 'c' ? { nombre: parts[0], ciudad: parts[1], tel: parts[2] } : { nombre: parts[0], precio: parts[1] };
-            await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload }) });
+        async function del(action, index) {
+            if(!confirm("¿Deseas eliminar este registro?")) return;
+            await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload: { index } }) });
             load();
+        }
+
+        async function openModal(type) {
+            let val;
+            if(type === 'c') {
+                const n = prompt("Nombre del cliente:");
+                const c = prompt("Ciudad:");
+                const t = prompt("Teléfono:");
+                if(n) val = { action: 'upsertCliente', payload: { nombre: n, ciudad: c, tel: t } };
+            } else {
+                const m = prompt("Nombre del modelo:");
+                const p = prompt("Precio base:");
+                if(m) val = { action: 'upsertProducto', payload: { modelo: m, precio: p } };
+            }
+            if(val) {
+                await fetch(API, { method: 'POST', body: JSON.stringify(val) });
+                load();
+            }
         }
 
         load();
