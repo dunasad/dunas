@@ -1,81 +1,62 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUNAS STUDIO - Gestión</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUNAS STUDIO</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 min-h-screen">
-    <nav class="bg-red-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-10">
-        <h1 class="font-bold text-xl tracking-wider">DUNAS STUDIO</h1>
-        <div class="flex gap-4">
-            <button onclick="showTab('ventas')" class="px-3 py-1 rounded hover:bg-red-700 transition">Ventas</button>
-            <button onclick="showTab('clientes')" class="px-3 py-1 rounded hover:bg-red-700 transition">Clientes</button>
-            <button onclick="showTab('modelos')" class="px-3 py-1 rounded hover:bg-red-700 transition">Modelos</button>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-red-900 text-white p-4 flex justify-between items-center shadow-xl">
+        <h1 class="font-bold">DUNAS STUDIO</h1>
+        <div class="space-x-2">
+            <button onclick="showTab('ventas')" class="px-3">Ventas</button>
+            <button onclick="showTab('clientes')" class="px-3">Clientes</button>
+            <button onclick="showTab('modelos')" class="px-3">Modelos</button>
         </div>
     </nav>
 
-    <main id="ventas" class="tab-content p-4 max-w-5xl mx-auto">
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Nueva Nota de Venta</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Seleccionar Cliente:</label>
-                    <select id="v_cliente" class="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-red-500 outline-none"></select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Agregar Modelo:</label>
-                    <div class="flex gap-2">
-                        <select id="v_modelo_sel" class="flex-1 border-2 border-gray-200 p-3 rounded-lg focus:border-red-500 outline-none"></select>
-                        <button onclick="addItem()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md">+ Añadir</button>
-                    </div>
+    <div id="ventas" class="tab-content p-4 max-w-6xl mx-auto">
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-xl font-bold mb-4 border-b">Nueva Nota de Venta</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <select id="v_cliente" class="border-2 p-3 rounded-lg"></select>
+                <div class="flex gap-2">
+                    <select id="v_modelo" class="flex-1 border-2 p-3 rounded-lg"></select>
+                    <button onclick="addItem()" class="bg-blue-600 text-white px-6 rounded-lg font-bold">+ Agregar</button>
                 </div>
             </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 text-gray-700 uppercase text-xs">
-                            <th class="p-3 text-left border">Modelo</th>
-                            <th class="p-3 text-center border w-24">Cant.</th>
-                            <th class="p-3 text-right border w-32">Precio Uni.</th>
-                            <th class="p-3 text-right border w-32">Subtotal</th>
-                            <th class="p-3 text-center border w-16"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="v_tabla" class="text-gray-600"></tbody>
-                </table>
+            <table class="w-full border-collapse bg-white">
+                <thead><tr class="bg-gray-200">
+                    <th class="p-2 border">Modelo</th>
+                    <th class="p-2 border">Descripción</th>
+                    <th class="p-2 border w-20">Cant.</th>
+                    <th class="p-2 border w-32">Precio</th>
+                    <th class="p-2 border">Subtotal</th>
+                    <th class="p-2 border"></th>
+                </tr></thead>
+                <tbody id="v_tabla"></tbody>
+            </table>
+            <div class="text-right mt-6">
+                <div class="text-2xl font-bold text-red-800 mb-4">Total: $<span id="v_total">0.00</span></div>
+                <button onclick="processSale()" id="btn_sale" class="bg-red-700 text-white px-8 py-3 rounded-lg font-bold w-full md:w-auto">GENERAR PDF Y GUARDAR VENTA</button>
             </div>
-
-            <div class="mt-6 flex flex-col items-end gap-4">
-                <div class="text-3xl font-black text-red-700">Total: $<span id="v_total">0.00</span></div>
-                <button onclick="processSale()" id="btn_sale" class="bg-red-600 text-white px-10 py-4 rounded-xl font-black text-lg hover:bg-red-700 transition shadow-lg w-full md:w-auto">
-                    GENERAR PDF Y GUARDAR VENTA
-                </button>
-            </div>
-        </div>
-    </main>
-
-    <div id="clientes" class="tab-content hidden p-4 max-w-5xl mx-auto">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold">Mis Clientes</h2>
-                <button onclick="openModal('c')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">+ Nuevo Cliente</button>
-            </div>
-            <div id="t_clientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
     </div>
 
-    <div id="modelos" class="tab-content hidden p-4 max-w-5xl mx-auto">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold">Catálogo de Modelos</h2>
-                <button onclick="openModal('m')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">+ Nuevo Modelo</button>
-            </div>
-            <div id="t_modelos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    <div id="clientes" class="tab-content hidden p-4 max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="font-bold text-xl">Mis Clientes</h2>
+            <button onclick="openModal('c')" class="bg-green-600 text-white p-2 rounded">+ Nuevo Cliente</button>
         </div>
+        <div id="list_clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </div>
+
+    <div id="modelos" class="tab-content hidden p-4 max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="font-bold text-xl">Catálogo de Modelos</h2>
+            <button onclick="openModal('m')" class="bg-green-600 text-white p-2 rounded">+ Nuevo Modelo</button>
+        </div>
+        <div id="list_modelos" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
     </div>
 
     <script>
@@ -84,48 +65,37 @@
         let cart = [];
 
         async function load() {
-            try {
-                const res = await fetch(API);
-                db = await res.json();
-                renderUI();
-            } catch (e) {
-                alert("Error cargando datos. Verifica tu conexión.");
-            }
+            const res = await fetch(API);
+            db = await res.json();
+            renderUI();
         }
 
         function renderUI() {
-            document.getElementById('v_cliente').innerHTML = db.clientes.map(c => `<option value="${c.nombre}">${c.nombre} (${c.ciudad})</option>`).join('');
-            document.getElementById('v_modelo_sel').innerHTML = db.modelos.map((m,i) => `<option value="${i}">${m.modelo} - $${m.precio}</option>`).join('');
+            document.getElementById('v_cliente').innerHTML = db.clientes.map(c => `<option value="${c.nombre}">${c.nombre} (${c.dato2})</option>`).join('');
+            document.getElementById('v_modelo').innerHTML = db.modelos.map((m,i) => `<option value="${i}">${m.nombre} - $${m.dato2}</option>`).join('');
             
-            document.getElementById('t_clientes').innerHTML = db.clientes.map(c => `
-                <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center shadow-sm">
-                    <div><p class="font-bold text-red-800">${c.nombre}</p><p class="text-xs text-gray-500">${c.ciudad}</p></div>
-                    <button onclick="del('deleteCliente', ${c.index})" class="text-red-500 hover:text-red-700 font-bold">X</button>
+            document.getElementById('list_clientes').innerHTML = db.clientes.map(c => `
+                <div class="bg-white p-4 rounded shadow flex justify-between items-center border-l-4 border-red-700">
+                    <div><p class="font-bold">${c.nombre}</p><p class="text-xs text-gray-400">${c.dato2}</p></div>
+                    <button onclick="del('Clientes', ${c.index})" class="text-red-500">X</button>
                 </div>`).join('');
             
-            document.getElementById('t_modelos').innerHTML = db.modelos.map(m => `
-                <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center shadow-sm">
-                    <div><p class="font-bold text-gray-800">${m.modelo}</p><p class="text-green-600 font-bold">$${m.precio}</p></div>
-                    <button onclick="del('deleteModelo', ${m.index})" class="text-red-500 hover:text-red-700 font-bold">X</button>
+            document.getElementById('list_modelos').innerHTML = db.modelos.map(m => `
+                <div class="bg-white p-4 rounded shadow flex justify-between items-center border-l-4 border-blue-700">
+                    <div><p class="font-bold">${m.nombre}</p><p class="text-xs text-gray-400">${m.dato3 || 'Sin desc.'}</p></div>
+                    <button onclick="del('Modelos', ${m.index})" class="text-red-500">X</button>
                 </div>`).join('');
         }
 
         function addItem() {
-            const mIdx = document.getElementById('v_modelo_sel').value;
-            const m = db.modelos[mIdx];
-            if(!m) return;
-            cart.push({ modelo: m.modelo, precio: parseFloat(m.precio), cantidad: 1, subtotal: parseFloat(m.precio) });
+            const m = db.modelos[document.getElementById('v_modelo').value];
+            cart.push({ modelo: m.nombre, descripcion: m.dato3 || '', precio: parseFloat(m.dato2), cantidad: 1, subtotal: parseFloat(m.dato2) });
             renderCart();
         }
 
-        function updateCart(idx, field, value) {
-            cart[idx][field] = parseFloat(value) || 0;
-            cart[idx].subtotal = cart[idx].cantidad * cart[idx].precio;
-            renderCart();
-        }
-
-        function removeCart(idx) {
-            cart.splice(idx, 1);
+        function updateCart(i, field, val) {
+            cart[i][field] = (field === 'descripcion') ? val : parseFloat(val);
+            cart[i].subtotal = (cart[i].cantidad || 0) * (cart[i].precio || 0);
             renderCart();
         }
 
@@ -133,36 +103,25 @@
             let total = 0;
             document.getElementById('v_tabla').innerHTML = cart.map((it, i) => {
                 total += it.subtotal;
-                return `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 border text-sm">${it.modelo}</td>
-                    <td class="p-3 border"><input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-full text-center border-2 border-gray-100 rounded focus:border-red-400"></td>
-                    <td class="p-3 border text-right"><input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-full text-right border-2 border-gray-100 rounded focus:border-red-400"></td>
-                    <td class="p-3 border text-right font-bold text-gray-700">$${it.subtotal.toFixed(2)}</td>
-                    <td class="p-3 border text-center"><button onclick="removeCart(${i})" class="text-red-400 hover:text-red-600 font-bold">X</button></td>
+                return `<tr>
+                    <td class="p-2 border font-bold">${it.modelo}</td>
+                    <td class="p-2 border"><input type="text" value="${it.descripcion}" onchange="updateCart(${i}, 'descripcion', this.value)" class="w-full border rounded p-1"></td>
+                    <td class="p-2 border"><input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-full border rounded p-1 text-center"></td>
+                    <td class="p-2 border"><input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-full border rounded p-1 text-right"></td>
+                    <td class="p-2 border text-right font-bold">$${it.subtotal.toFixed(2)}</td>
+                    <td class="p-2 border text-center"><button onclick="cart.splice(${i},1); renderCart();" class="text-red-500">X</button></td>
                 </tr>`;
             }).join('');
             document.getElementById('v_total').innerText = total.toFixed(2);
         }
 
         async function processSale() {
-            if(cart.length === 0) return alert("Agrega modelos a la venta primero.");
             const btn = document.getElementById('btn_sale');
-            btn.disabled = true; btn.innerText = "GENERANDO NOTA...";
-            
-            const payload = {
-                cliente: { nombre: document.getElementById('v_cliente').value },
-                items: cart,
-                total: document.getElementById('v_total').innerText
-            };
-
+            btn.disabled = true; btn.innerText = "PROCESANDO...";
+            const payload = { cliente: document.getElementById('v_cliente').value, items: cart, total: document.getElementById('v_total').innerText };
             const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'createSale', payload }) });
             const data = await res.json();
-            if(data.status === "success") {
-                window.open(data.url, '_blank');
-                cart = []; renderCart();
-                alert("Venta guardada y PDF generado.");
-            }
+            if(data.status === "success") { window.open(data.url, '_blank'); cart = []; renderCart(); }
             btn.disabled = false; btn.innerText = "GENERAR PDF Y GUARDAR VENTA";
         }
 
@@ -171,26 +130,19 @@
             document.getElementById(id).classList.remove('hidden');
         }
 
-        async function del(action, index) {
-            if(!confirm("¿Deseas eliminar este registro?")) return;
-            await fetch(API, { method: 'POST', body: JSON.stringify({ action, payload: { index } }) });
+        async function del(sheet, index) {
+            if(!confirm("¿Eliminar?")) return;
+            await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'delete', payload: { sheet, index } }) });
             load();
         }
 
         async function openModal(type) {
             if(type === 'c') {
-                const n = prompt("Nombre del cliente:");
-                const c = prompt("Ciudad:");
-                const t = prompt("Teléfono:");
-                if(n) {
-                    await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'upsertCliente', payload: { nombre: n, ciudad: c, tel: t } }) });
-                }
+                const nombre = prompt("Nombre:"); const ciudad = prompt("Ciudad:"); const tel = prompt("Teléfono:");
+                if(nombre) await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'upsertCliente', payload: { nombre, ciudad, tel } }) });
             } else {
-                const m = prompt("Nombre del modelo:");
-                const p = prompt("Precio base:");
-                if(m) {
-                    await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'upsertModelo', payload: { modelo: m, precio: p } }) });
-                }
+                const modelo = prompt("Nombre del Modelo:"); const precio = prompt("Precio:"); const descripcion = prompt("Descripción:");
+                if(modelo) await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'upsertModelo', payload: { modelo, precio, descripcion } }) });
             }
             load();
         }
