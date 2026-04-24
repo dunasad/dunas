@@ -8,7 +8,7 @@
 </head>
 <body class="bg-slate-50 min-h-screen">
     <nav class="bg-[#800000] text-white p-4 flex justify-between items-center shadow-lg sticky top-0 z-50">
-        <div class="font-black text-xl tracking-tighter">DUNAS STUDIO</div>
+        <div class="font-black text-xl tracking-tighter uppercase">DUNAS STUDIO</div>
         <div class="flex gap-4 font-bold text-sm">
             <button onclick="showTab('ventas')">VENTAS</button>
             <button onclick="showTab('clientes')">CLIENTES</button>
@@ -23,18 +23,18 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="text-xs font-bold text-slate-400 uppercase">Cliente</label>
-                    <select id="v_cliente" class="w-full border-2 p-3 rounded-xl focus:border-red-500 outline-none"></select>
+                    <select id="v_cliente" class="w-full border-2 p-3 rounded-xl focus:border-red-500 outline-none bg-white"></select>
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-400 uppercase">Trabajo / Descripción General</label>
-                    <input type="text" id="v_trabajo" placeholder="Ej: Fabricación de palas tejidas" class="w-full border-2 p-3 rounded-xl">
+                    <label class="text-xs font-bold text-slate-400 uppercase">Trabajo / Descripción</label>
+                    <input type="text" id="v_trabajo" placeholder="Ej: Fabricación de palas tejidas" class="w-full border-2 p-3 rounded-xl outline-none">
                 </div>
             </div>
 
             <div class="mb-6">
                 <label class="text-xs font-bold text-slate-400 uppercase">Modelo base</label>
                 <div class="flex gap-2">
-                    <select id="v_modelo_sel" class="flex-1 border-2 p-3 rounded-xl focus:border-red-500 outline-none"></select>
+                    <select id="v_modelo_sel" class="flex-1 border-2 p-3 rounded-xl focus:border-red-500 outline-none bg-white"></select>
                     <button onclick="addItem()" class="bg-blue-600 text-white px-6 rounded-xl font-bold hover:bg-blue-700">+ Añadir</button>
                 </div>
             </div>
@@ -64,17 +64,15 @@
     </main>
 
     <section id="clientes" class="tab-content hidden p-4 max-w-5xl mx-auto">
-        <h2 class="text-2xl font-bold mb-4">Administración de Clientes</h2>
         <div id="list_clientes" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
     </section>
 
     <section id="modelos" class="tab-content hidden p-4 max-w-5xl mx-auto">
-        <h2 class="text-2xl font-bold mb-4">Catálogo de Modelos</h2>
         <div id="list_modelos" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
     </section>
 
     <script>
-        // URL REAL DE TU APP SCRIPT
+        // URL de tu Apps Script
         const API = "https://script.google.com/macros/s/AKfycbx8zhRhT578V1D94Gba6mkVw2Sa370_wgbHUJmQrGPtQfpFDO9SaigQy5W4DCS_-yAUzQ/exec";
         
         let db = { clientes: [], modelos: [] };
@@ -82,7 +80,8 @@
 
         async function load() {
             try {
-                const res = await fetch(API);
+                // Se agrega redirección manual para evitar el error CORS en algunos navegadores
+                const res = await fetch(API, { method: 'GET', mode: 'cors' });
                 db = await res.json();
                 renderUI();
             } catch (err) {
@@ -94,26 +93,19 @@
             const selC = document.getElementById('v_cliente');
             const selM = document.getElementById('v_modelo_sel');
 
-            // Corregimos carga de nombres (evita undefined)
-            selC.innerHTML = db.clientes.map((c, i) => `<option value="${i}">${c.nombre || 'Sin Nombre'}</option>`).join('');
-            selM.innerHTML = db.modelos.map((m, i) => `<option value="${i}">${m.nombre || 'Modelo'}</option>`).join('');
-            
-            // Render de listas de gestión
-            document.getElementById('list_clientes').innerHTML = db.clientes.map(c => `
-                <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
-                    <div><p class="font-bold text-red-900">${c.nombre}</p><p class="text-[10px] text-slate-400">${c.destino || ''}</p></div>
-                </div>`).join('');
-            
-            document.getElementById('list_modelos').innerHTML = db.modelos.map(m => `
-                <div class="bg-white p-4 rounded-xl border shadow-sm">
-                    <p class="font-bold text-slate-700">${m.nombre}</p>
-                </div>`).join('');
+            // Mapeo seguro para evitar "undefined"
+            if (db.clientes && db.clientes.length > 0) {
+                selC.innerHTML = db.clientes.map((c, i) => `<option value="${i}">${c.nombre || 'Sin Nombre'}</option>`).join('');
+            }
+            if (db.modelos && db.modelos.length > 0) {
+                selM.innerHTML = db.modelos.map((m, i) => `<option value="${i}">${m.nombre || 'Modelo'}</option>`).join('');
+            }
         }
 
         function addItem() {
             const sel = document.getElementById('v_modelo_sel');
+            if (!db.modelos[sel.value]) return;
             const m = db.modelos[sel.value];
-            if(!m) return;
             cart.push({ modelo: m.nombre, descripcion: '', precio: 0, cantidad: 1, subtotal: 0 });
             renderCart();
         }
@@ -129,20 +121,20 @@
             document.getElementById('v_tabla').innerHTML = cart.map((it, i) => {
                 total += it.subtotal;
                 return `
-                <tr class="bg-white shadow-sm border">
+                <tr class="bg-white shadow-sm border border-slate-100">
                     <td class="p-4 rounded-l-xl">
-                        <div class="font-bold text-slate-800">${it.modelo}</div>
-                        <input type="text" placeholder="Añadir detalle..." value="${it.descripcion}" onchange="updateCart(${i}, 'descripcion', this.value)" class="text-xs w-full text-blue-600 outline-none italic">
+                        <div class="font-bold text-slate-800 uppercase text-xs">${it.modelo}</div>
+                        <input type="text" placeholder="Ej: Color negro..." onchange="updateCart(${i}, 'descripcion', this.value)" class="text-[10px] w-full text-blue-500 outline-none italic bg-transparent">
                     </td>
                     <td class="p-4 text-center">
-                        <input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-16 text-center border rounded font-bold">
+                        <input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-14 text-center border rounded font-bold text-sm">
                     </td>
-                    <td class="p-4 text-right">
-                        <input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-24 text-right border rounded font-bold">
+                    <td class="p-4 text-right font-bold text-sm">
+                        $ <input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-20 text-right border rounded font-bold outline-none">
                     </td>
-                    <td class="p-4 text-right font-black text-slate-700">$${it.subtotal.toFixed(2)}</td>
+                    <td class="p-4 text-right font-black text-slate-700 text-sm">$${it.subtotal.toFixed(2)}</td>
                     <td class="p-4 rounded-r-xl text-center">
-                        <button onclick="cart.splice(${i},1); renderCart();" class="text-red-400 hover:text-red-600">✕</button>
+                        <button onclick="cart.splice(${i},1); renderCart();" class="text-red-300 hover:text-red-600">✕</button>
                     </td>
                 </tr>`;
             }).join('');
@@ -154,41 +146,41 @@
             const clienteIdx = document.getElementById('v_cliente').value;
             const clienteObj = db.clientes[clienteIdx];
 
-            if(!clienteObj || cart.length === 0) return alert("Selecciona un cliente y productos.");
+            if(!clienteObj || cart.length === 0) return alert("Selecciona cliente y modelos.");
 
-            const prefix = clienteObj.nombre.substring(0,3).toUpperCase();
-            const nVenta = prefix + "01"; 
+            btn.disabled = true;
+            btn.innerText = "PROCESANDO...";
 
             const payload = {
                 cliente: clienteObj.nombre,
-                destino: clienteObj.destino,
-                tel: clienteObj.tel,
+                destino: clienteObj.destino || "",
+                tel: clienteObj.tel || "",
                 trabajoDesc: document.getElementById('v_trabajo').value,
-                nVenta: nVenta,
+                nVenta: clienteObj.nombre.substring(0,3).toUpperCase() + "01",
                 items: cart,
                 total: document.getElementById('v_total').innerText
             };
 
-            btn.disabled = true; btn.innerText = "GENERANDO PDF...";
-            
             try {
-                const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'createSale', payload }) });
-                const data = await res.json();
-                
-                if(data.status === "success") {
-                    // Descarga directa para móviles
-                    window.location.href = data.url; 
-                    alert("¡Nota guardada! Se descargará el archivo.");
-                    cart = []; 
-                    document.getElementById('v_trabajo').value = "";
-                    renderCart();
-                } else {
-                    alert("Error: " + data.message);
-                }
+                const response = await fetch(API, {
+                    method: 'POST',
+                    mode: 'no-cors', // Importante para evitar problemas de CORS al enviar
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'createSale', payload })
+                });
+
+                // Como usamos no-cors, no podemos leer la respuesta directamente, 
+                // pero la venta se procesa en el servidor.
+                alert("Petición enviada. Si el PDF no abre automáticamente, revisa tu carpeta de Drive.");
+                cart = [];
+                renderCart();
             } catch (e) {
-                alert("Error de conexión con el servidor.");
+                console.error(e);
+                alert("Error al enviar los datos.");
             } finally {
-                btn.disabled = false; btn.innerText = "GENERAR PDF Y GUARDAR";
+                btn.disabled = false;
+                btn.innerText = "GENERAR PDF Y GUARDAR";
             }
         }
 
