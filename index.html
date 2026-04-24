@@ -8,52 +8,62 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   <style>
     :root { --d-blue: #1a237e; --d-red: #d32f2f; }
-    body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-    .nav-pills .nav-link.active { background: var(--d-blue) !important; }
+    body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding-bottom: 30px; }
+    .nav-pills .nav-link { color: var(--d-blue); font-weight: 600; border-radius: 50px; }
+    .nav-pills .nav-link.active { background: var(--d-blue) !important; color: white; }
     .card { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-    .btn-edit-soft { color: var(--d-blue); background: #eef; border: none; padding: 5px 10px; border-radius: 8px; }
-    .btn-danger-soft { color: var(--d-red); background: #fee; border: none; padding: 5px 10px; border-radius: 8px; }
-    .nav-link { color: var(--d-blue); font-weight: 600; }
+    .btn-primary { background: var(--d-blue); border: none; border-radius: 10px; }
+    .btn-edit-soft { color: var(--d-blue); background: #eef; border: none; padding: 6px 12px; border-radius: 8px; }
+    .btn-danger-soft { color: var(--d-red); background: #fee; border: none; padding: 6px 12px; border-radius: 8px; }
+    .list-group-item { border: none; margin-bottom: 8px; border-radius: 12px !important; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
   </style>
 </head>
 <body>
 
   <div class="container mt-4">
-    <div class="text-center mb-4"><h3 style="color: var(--d-blue); font-weight: 800;">DUNAS STUDIO</h3></div>
+    <div class="text-center mb-4"><h3 style="color: var(--d-blue); font-weight: 800; letter-spacing: 2px;">DUNAS STUDIO</h3></div>
 
-    <ul class="nav nav-pills nav-fill bg-white p-1 rounded-pill mb-4 shadow-sm">
-      <li class="nav-item"><button class="nav-link active rounded-pill" onclick="showTab('nota')">Nota</button></li>
-      <li class="nav-item"><button class="nav-link rounded-pill" onclick="showTab('historial')">Notas</button></li>
-      <li class="nav-item"><button class="nav-link rounded-pill" onclick="showTab('clientes')">Clientes</button></li>
-      <li class="nav-item"><button class="nav-link rounded-pill" onclick="showTab('modelos')">Modelos</button></li>
+    <ul class="nav nav-pills nav-fill bg-white p-1 rounded-pill mb-4 shadow-sm" id="mainNav">
+      <li class="nav-item"><button class="nav-link active" onclick="showTab('nota')">Nota</button></li>
+      <li class="nav-item"><button class="nav-link" onclick="showTab('historial')">Notas</button></li>
+      <li class="nav-item"><button class="nav-link" onclick="showTab('clientes')">Clientes</button></li>
+      <li class="nav-item"><button class="nav-link" onclick="showTab('modelos')">Modelos</button></li>
     </ul>
 
     <div id="tab-nota" class="tab-view">
       <div class="card p-4">
+        <label class="small fw-bold text-muted mb-1 uppercase">Cliente</label>
         <select id="selCliente" class="form-select mb-3" onchange="updatePrev()"></select>
+        <div id="prevC" class="small text-muted mb-3 ms-1"></div>
+        
+        <label class="small fw-bold text-muted mb-1 uppercase">Trabajo</label>
         <input type="text" id="v_trabajo" value="Fabricación de palas tejidas" class="form-control mb-4">
+
         <div id="itemsContainer"></div>
         <button class="btn btn-outline-primary btn-sm w-100 mb-4" onclick="addItem()">+ Agregar Concepto</button>
+        
         <div class="text-end mb-4"><span class="h4 fw-bold text-danger">Total: $<span id="totalDisplay">0.00</span></span></div>
-        <button class="btn btn-primary w-100 p-3 fw-bold shadow" id="btnGen" onclick="genNota()">GENERAR Y ABRIR PDF</button>
+        <button class="btn btn-primary w-100 p-3 fw-bold shadow" id="btnGen" onclick="genNota()">GENERAR PDF Y GUARDAR</button>
       </div>
     </div>
 
     <div id="tab-historial" class="tab-view d-none">
-        <div class="card p-3"><div id="listaVentas" class="list-group list-group-flush"></div></div>
+        <div id="listaVentas" class="list-group"></div>
     </div>
 
     <div id="tab-clientes" class="tab-view d-none">
-        <div class="card p-3"><div id="listaClientes" class="list-group list-group-flush"></div></div>
+        <div id="listaClientes" class="list-group"></div>
     </div>
 
     <div id="tab-modelos" class="tab-view d-none">
-        <div class="card p-3"><div id="listaModelos" class="list-group list-group-flush"></div></div>
+        <div id="listaModelos" class="list-group"></div>
     </div>
   </div>
 
   <script>
+    // PEGA AQUÍ TU URL DE GOOGLE (La que termina en /exec)
     const API = "https://script.google.com/macros/s/AKfycbx8zhRhT578V1D94Gba6mkVw2Sa370_wgbHUJmQrGPtQfpFDO9SaigQy5W4DCS_-yAUzQ/exec";
+    
     let appD = { clientes: [], modelos: [], ventas: [] };
 
     window.onload = load;
@@ -63,49 +73,130 @@
         const res = await fetch(API + "?action=getData");
         appD = await res.json();
         render();
-      } catch (e) { alert("Error de conexión. Verifica la publicación del Script."); }
+      } catch (e) { console.error("Error cargando datos:", e); }
     }
 
     function render() {
+      // Clientes Selector
       document.getElementById('selCliente').innerHTML = '<option value="">Selecciona Cliente...</option>' + 
         appD.clientes.map((c,i) => `<option value="${i}">${c.nombre}</option>`).join('');
       
+      // Notas Guardadas (Historial)
       document.getElementById('listaVentas').innerHTML = appD.ventas.map(v => `
-        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-          <div><div class="fw-bold">${v.ventaNo}</div><small>${v.cliente} - $${v.total}</small></div>
-          <a href="${v.url}" target="_blank" class="btn-edit-soft text-decoration-none">Ver PDF</a>
-        </div>`).join('');
+        <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+          <div><div class="fw-bold text-primary">${v.ventaNo}</div><div class="small">${v.cliente}</div><div class="text-muted" style="font-size:10px">${v.fecha} - $${v.total}</div></div>
+          <a href="${v.url}" target="_blank" class="btn-edit-soft text-decoration-none"><i class="bi bi-file-pdf"></i> Ver</a>
+        </div>`).reverse().join('');
 
+      // Clientes Listado
       document.getElementById('listaClientes').innerHTML = appD.clientes.map(c => `
-        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-          <div><div class="fw-bold">${c.nombre}</div><small>${c.destino}</small></div>
-          <div class="d-flex gap-2">
-            <button class="btn-danger-soft" onclick="borrar('Clientes', ${c.row})"><i class="bi bi-trash"></i></button>
-          </div>
+        <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+          <div><div class="fw-bold">${c.nombre}</div><small class="text-muted">${c.destino}</small></div>
+          <button class="btn-danger-soft" onclick="borrar('Clientes', ${c.row})"><i class="bi bi-trash"></i></button>
         </div>`).join('');
 
+      // Modelos Listado
       document.getElementById('listaModelos').innerHTML = appD.modelos.map(m => `
-        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+        <div class="list-group-item d-flex justify-content-between align-items-center p-3">
           <span class="fw-bold">${m.nombre}</span>
           <button class="btn-danger-soft" onclick="borrar('Modelos', ${m.row})"><i class="bi bi-trash"></i></button>
         </div>`).join('');
 
-      if(!document.getElementById('itemsContainer').innerHTML) addItem();
+      if(document.getElementById('itemsContainer').innerHTML === "") addItem();
+    }
+
+    function addItem() {
+      const div = document.createElement('div');
+      div.className = 'card p-3 mb-3 border-light bg-light position-relative shadow-sm';
+      div.innerHTML = `
+        <button class="btn-close position-absolute top-0 end-0 m-2" style="font-size: 8px" onclick="this.parentElement.remove(); calc();"></button>
+        <select class="form-select border-0 fw-bold mb-1 bg-transparent p-0 shadow-none">
+            ${appD.modelos.map(m => `<option>${m.nombre}</option>`).join('')}
+        </select>
+        <input type="text" class="form-control form-control-sm border-0 mb-2 p-0 shadow-none text-primary" placeholder="Detalle (Color, etc)">
+        <div class="row g-2">
+            <div class="col-6"><input type="number" class="form-control form-control-sm" placeholder="Cant." onchange="calc()"></div>
+            <div class="col-6"><input type="number" class="form-control form-control-sm" placeholder="Precio" onchange="calc()"></div>
+        </div>`;
+      document.getElementById('itemsContainer').appendChild(div);
+    }
+
+    function calc() {
+        let t = 0;
+        document.querySelectorAll('#itemsContainer > div').forEach(d => {
+            const inputs = d.querySelectorAll('input');
+            const q = parseFloat(inputs[1].value) || 0;
+            const p = parseFloat(inputs[2].value) || 0;
+            t += q * p;
+        });
+        document.getElementById('totalDisplay').innerText = t.toFixed(2);
+    }
+
+    async function genNota() {
+      const idx = document.getElementById('selCliente').value;
+      if(!idx) return alert("Selecciona un cliente");
+      
+      const btn = document.getElementById('btnGen');
+      btn.disabled = true; btn.innerText = "GENERANDO...";
+
+      const items = [];
+      document.querySelectorAll('#itemsContainer > div').forEach(d => {
+        const sel = d.querySelector('select').value;
+        const inputs = d.querySelectorAll('input');
+        if(inputs[1].value && inputs[2].value) {
+            items.push({
+                modelo: sel, 
+                desc: inputs[0].value, 
+                cantidad: parseFloat(inputs[1].value), 
+                precio: parseFloat(inputs[2].value), 
+                subtotal: inputs[1].value * inputs[2].value
+            });
+        }
+      });
+
+      const payload = {
+        clienteNombre: appD.clientes[idx].nombre,
+        clienteDestino: appD.clientes[idx].destino,
+        clienteTel: appD.clientes[idx].tel,
+        trabajoDesc: document.getElementById('v_trabajo').value,
+        items: items,
+        totalFinal: parseFloat(document.getElementById('totalDisplay').innerText)
+      };
+
+      try {
+        const response = await fetch(API, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'processSale', payload })
+        });
+        const result = await response.json();
+        if(result.url) {
+            window.open(result.url, '_blank'); // Abre el PDF
+            alert("Venta guardada.");
+            location.reload();
+        }
+      } catch (e) {
+        alert("Nota enviada. Revisa la pestaña de 'Notas' en unos segundos.");
+        load();
+        btn.disabled = false; btn.innerText = "GENERAR PDF Y GUARDAR";
+      }
     }
 
     async function borrar(tabla, fila) {
-        if(!confirm("¿Seguro que quieres eliminar este registro?")) return;
-        await fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: 'deleteRow', table: tabla, row: fila}) });
-        alert("Solicitud de eliminación enviada.");
+        if(!confirm("¿Eliminar este registro?")) return;
+        await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'deleteRow', table: tabla, row: fila }) });
+        alert("Eliminado");
         load();
     }
 
-    // ... (Mantener funciones addItem, calc y updatePrev del código anterior)
-    
+    function updatePrev() {
+      const i = document.getElementById('selCliente').value;
+      document.getElementById('prevC').innerText = i ? `${appD.clientes[i].destino} | ${appD.clientes[i].tel}` : "";
+    }
+
     function showTab(id) {
       document.querySelectorAll('.tab-view').forEach(v => v.classList.add('d-none'));
       document.getElementById('tab-' + id).classList.remove('d-none');
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      document.querySelectorAll('#mainNav .nav-link').forEach(l => l.classList.remove('active'));
       event.currentTarget.classList.add('active');
     }
   </script>
