@@ -12,7 +12,7 @@
         <div class="flex gap-4">
             <button onclick="showTab('ventas')" class="px-3 py-1 rounded hover:bg-red-700 transition">Ventas</button>
             <button onclick="showTab('clientes')" class="px-3 py-1 rounded hover:bg-red-700 transition">Clientes</button>
-            <button onclick="showTab('productos')" class="px-3 py-1 rounded hover:bg-red-700 transition">Modelos</button>
+            <button onclick="showTab('modelos')" class="px-3 py-1 rounded hover:bg-red-700 transition">Modelos</button>
         </div>
     </nav>
 
@@ -28,8 +28,8 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-600 mb-1">Agregar Modelo:</label>
                     <div class="flex gap-2">
-                        <select id="v_prod" class="flex-1 border-2 border-gray-200 p-3 rounded-lg focus:border-red-500 outline-none"></select>
-                        <button onclick="addItem()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md">+ Agregar</button>
+                        <select id="v_modelo_sel" class="flex-1 border-2 border-gray-200 p-3 rounded-lg focus:border-red-500 outline-none"></select>
+                        <button onclick="addItem()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md">+ Añadir</button>
                     </div>
                 </div>
             </div>
@@ -68,53 +68,58 @@
         </div>
     </div>
 
-    <div id="productos" class="tab-content hidden p-4 max-w-5xl mx-auto">
+    <div id="modelos" class="tab-content hidden p-4 max-w-5xl mx-auto">
         <div class="bg-white p-6 rounded-lg shadow">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold">Catálogo de Modelos</h2>
-                <button onclick="openModal('p')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">+ Nuevo Modelo</button>
+                <button onclick="openModal('m')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold">+ Nuevo Modelo</button>
             </div>
-            <div id="t_productos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            <div id="t_modelos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
     </div>
 
     <script>
         const API = "https://script.google.com/macros/s/AKfycbx8zhRhT578V1D94Gba6mkVw2Sa370_wgbHUJmQrGPtQfpFDO9SaigQy5W4DCS_-yAUzQ/exec";
-        let db = { clientes: [], productos: [] };
+        let db = { clientes: [], modelos: [] };
         let cart = [];
 
         async function load() {
-            const res = await fetch(API);
-            db = await res.json();
-            renderUI();
+            try {
+                const res = await fetch(API);
+                db = await res.json();
+                renderUI();
+            } catch (e) {
+                alert("Error cargando datos. Verifica tu conexión.");
+            }
         }
 
         function renderUI() {
             document.getElementById('v_cliente').innerHTML = db.clientes.map(c => `<option value="${c.nombre}">${c.nombre} (${c.ciudad})</option>`).join('');
-            document.getElementById('v_prod').innerHTML = db.productos.map((p,i) => `<option value="${i}">${p.modelo} - $${p.precio}</option>`).join('');
+            document.getElementById('v_modelo_sel').innerHTML = db.modelos.map((m,i) => `<option value="${i}">${m.modelo} - $${m.precio}</option>`).join('');
             
             document.getElementById('t_clientes').innerHTML = db.clientes.map(c => `
-                <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center">
+                <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center shadow-sm">
                     <div><p class="font-bold text-red-800">${c.nombre}</p><p class="text-xs text-gray-500">${c.ciudad}</p></div>
-                    <button onclick="del('deleteCliente', ${c.index})" class="text-red-500 text-sm font-bold">X</button>
+                    <button onclick="del('deleteCliente', ${c.index})" class="text-red-500 hover:text-red-700 font-bold">X</button>
                 </div>`).join('');
             
-            document.getElementById('t_productos').innerHTML = db.productos.map(p => `
-                <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center">
-                    <div><p class="font-bold text-gray-800">${p.modelo}</p><p class="text-green-600 font-bold">$${p.precio}</p></div>
-                    <button onclick="del('deleteProducto', ${p.index})" class="text-red-500 text-sm font-bold">X</button>
+            document.getElementById('t_modelos').innerHTML = db.modelos.map(m => `
+                <div class="border p-4 rounded-lg bg-gray-50 flex justify-between items-center shadow-sm">
+                    <div><p class="font-bold text-gray-800">${m.modelo}</p><p class="text-green-600 font-bold">$${m.precio}</p></div>
+                    <button onclick="del('deleteModelo', ${m.index})" class="text-red-500 hover:text-red-700 font-bold">X</button>
                 </div>`).join('');
         }
 
         function addItem() {
-            const pIdx = document.getElementById('v_prod').value;
-            const p = db.productos[pIdx];
-            cart.push({ modelo: p.modelo, precio: parseFloat(p.precio), cantidad: 1, subtotal: parseFloat(p.precio) });
+            const mIdx = document.getElementById('v_modelo_sel').value;
+            const m = db.modelos[mIdx];
+            if(!m) return;
+            cart.push({ modelo: m.modelo, precio: parseFloat(m.precio), cantidad: 1, subtotal: parseFloat(m.precio) });
             renderCart();
         }
 
         function updateCart(idx, field, value) {
-            cart[idx][field] = parseFloat(value);
+            cart[idx][field] = parseFloat(value) || 0;
             cart[idx].subtotal = cart[idx].cantidad * cart[idx].precio;
             renderCart();
         }
@@ -129,12 +134,12 @@
             document.getElementById('v_tabla').innerHTML = cart.map((it, i) => {
                 total += it.subtotal;
                 return `
-                <tr class="border-b">
-                    <td class="p-3 border">${it.modelo}</td>
-                    <td class="p-3 border"><input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-full text-center border rounded"></td>
-                    <td class="p-3 border text-right"><input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-full text-right border rounded"></td>
-                    <td class="p-3 border text-right font-bold">$${it.subtotal.toFixed(2)}</td>
-                    <td class="p-3 border text-center"><button onclick="removeCart(${i})" class="text-red-500 font-bold">X</button></td>
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 border text-sm">${it.modelo}</td>
+                    <td class="p-3 border"><input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-full text-center border-2 border-gray-100 rounded focus:border-red-400"></td>
+                    <td class="p-3 border text-right"><input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-full text-right border-2 border-gray-100 rounded focus:border-red-400"></td>
+                    <td class="p-3 border text-right font-bold text-gray-700">$${it.subtotal.toFixed(2)}</td>
+                    <td class="p-3 border text-center"><button onclick="removeCart(${i})" class="text-red-400 hover:text-red-600 font-bold">X</button></td>
                 </tr>`;
             }).join('');
             document.getElementById('v_total').innerText = total.toFixed(2);
@@ -143,10 +148,10 @@
         async function processSale() {
             if(cart.length === 0) return alert("Agrega modelos a la venta primero.");
             const btn = document.getElementById('btn_sale');
-            btn.disabled = true; btn.innerText = "PROCESANDO...";
+            btn.disabled = true; btn.innerText = "GENERANDO NOTA...";
             
             const payload = {
-                cliente: db.clientes.find(c => c.nombre === document.getElementById('v_cliente').value),
+                cliente: { nombre: document.getElementById('v_cliente').value },
                 items: cart,
                 total: document.getElementById('v_total').innerText
             };
@@ -156,7 +161,7 @@
             if(data.status === "success") {
                 window.open(data.url, '_blank');
                 cart = []; renderCart();
-                alert("Venta procesada con éxito.");
+                alert("Venta guardada y PDF generado.");
             }
             btn.disabled = false; btn.innerText = "GENERAR PDF Y GUARDAR VENTA";
         }
@@ -173,21 +178,21 @@
         }
 
         async function openModal(type) {
-            let val;
             if(type === 'c') {
                 const n = prompt("Nombre del cliente:");
                 const c = prompt("Ciudad:");
                 const t = prompt("Teléfono:");
-                if(n) val = { action: 'upsertCliente', payload: { nombre: n, ciudad: c, tel: t } };
+                if(n) {
+                    await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'upsertCliente', payload: { nombre: n, ciudad: c, tel: t } }) });
+                }
             } else {
                 const m = prompt("Nombre del modelo:");
                 const p = prompt("Precio base:");
-                if(m) val = { action: 'upsertProducto', payload: { modelo: m, precio: p } };
+                if(m) {
+                    await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'upsertModelo', payload: { modelo: m, precio: p } }) });
+                }
             }
-            if(val) {
-                await fetch(API, { method: 'POST', body: JSON.stringify(val) });
-                load();
-            }
+            load();
         }
 
         load();
