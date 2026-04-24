@@ -1,85 +1,128 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUNAS STUDIO</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUNAS STUDIO - Control de Ventas</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
-    <nav class="bg-[#800000] text-white p-4 flex justify-between items-center shadow-lg">
-        <div class="font-bold tracking-widest uppercase">DUNAS STUDIO</div>
-        <div class="space-x-6 text-sm font-bold">
-            <button onclick="showTab('ventas')">Ventas</button>
-            <button onclick="showTab('clientes')">Clientes</button>
-            <button onclick="showTab('modelos')">Modelos</button>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+    <nav class="bg-[#800000] text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="font-black tracking-tighter text-xl">DUNAS STUDIO</div>
+            <div class="flex gap-4 md:gap-8 text-xs font-bold uppercase">
+                <button onclick="showTab('ventas')" class="hover:text-red-200 transition">Ventas</button>
+                <button onclick="showTab('clientes')" class="hover:text-red-200 transition">Clientes</button>
+                <button onclick="showTab('modelos')" class="hover:text-red-200 transition">Modelos</button>
+            </div>
         </div>
     </nav>
 
-    <div id="ventas" class="tab-content p-4 max-w-5xl mx-auto">
-        <div class="bg-white p-8 rounded-xl shadow-xl">
-            <h2 class="text-2xl font-bold mb-6 text-slate-800">Nueva Nota de Venta</h2>
+    <div id="ventas" class="tab-content active p-4 md:p-8 max-w-5xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="text-xl font-bold text-slate-800">Nueva Nota de Venta</h2>
+            </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <select id="v_cliente" onchange="updateNventa()" class="border-2 p-3 rounded-lg focus:border-red-500 outline-none"></select>
-                <input type="text" id="v_trabajo" placeholder="Trabajo (ej: Fabricación de palas tejidas)" class="border-2 p-3 rounded-lg">
-            </div>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Seleccionar Cliente:</label>
+                        <select id="v_cliente" class="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-blue-500 outline-none transition bg-white text-slate-700"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Descripción del Trabajo:</label>
+                        <input type="text" id="v_trabajo" placeholder="Ej: Fabricación de palas tejidas" class="w-full border-2 border-slate-200 p-3 rounded-xl focus:border-blue-500 outline-none">
+                    </div>
+                </div>
 
-            <div class="flex gap-2 mb-6">
-                <select id="v_modelo_sel" class="flex-1 border-2 p-3 rounded-lg"></select>
-                <button onclick="addItem()" class="bg-blue-600 text-white px-8 rounded-lg font-bold hover:bg-blue-700">+ Agregar</button>
-            </div>
+                <div class="bg-blue-50 p-4 rounded-xl flex flex-col md:flex-row gap-3 items-end">
+                    <div class="flex-1 w-full">
+                        <label class="block text-xs font-bold text-blue-600 mb-1 uppercase">Agregar Modelo al Carrito:</label>
+                        <select id="v_modelo_sel" class="w-full border-2 border-blue-100 p-3 rounded-xl outline-none bg-white"></select>
+                    </div>
+                    <button onclick="addItem()" class="bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition w-full md:w-auto shadow-lg shadow-blue-200">
+                        + AGREGAR
+                    </button>
+                </div>
 
-            <table class="w-full text-left">
-                <thead class="text-slate-400 text-xs uppercase border-b">
-                    <tr><th class="py-3">Descripción</th><th class="text-center">Cant.</th><th class="text-right">Precio</th><th class="text-right">Total</th><th></th></tr>
-                </thead>
-                <tbody id="v_tabla" class="divide-y"></tbody>
-            </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-slate-400 text-[10px] uppercase tracking-widest border-b">
+                                <th class="py-3 px-2">Descripción</th>
+                                <th class="text-center px-2">Cant.</th>
+                                <th class="text-right px-2">Precio Uni.</th>
+                                <th class="text-right px-2">Subtotal</th>
+                                <th class="w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="v_tabla" class="divide-y divide-slate-100">
+                            </tbody>
+                    </table>
+                </div>
 
-            <div class="flex flex-col items-end mt-8 border-t pt-6">
-                <div class="text-red-600 font-bold text-3xl mb-4">Total: $<span id="v_total">0.00</span></div>
-                <button onclick="processSale()" id="btn_sale" class="bg-red-600 text-white px-10 py-4 rounded-xl font-bold text-lg hover:scale-105 transition shadow-lg w-full md:w-auto uppercase">GENERAR PDF Y GUARDAR</button>
+                <div class="flex flex-col items-end pt-6 border-t-2 border-slate-50">
+                    <div class="text-slate-500 font-medium mb-1">Total a Pagar</div>
+                    <div class="text-[#b91c1c] font-black text-4xl mb-6">$<span id="v_total">0.00</span></div>
+                    <button onclick="processSale()" id="btn_sale" class="bg-[#b91c1c] text-white px-12 py-5 rounded-2xl font-black text-lg hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-red-100 w-full md:w-auto uppercase tracking-tighter">
+                        Generar PDF y Guardar Venta
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
+    <div id="clientes" class="tab-content p-8 max-w-5xl mx-auto text-center text-slate-400">Sección de administración de clientes...</div>
+    <div id="modelos" class="tab-content p-8 max-w-5xl mx-auto text-center text-slate-400">Sección de administración de modelos...</div>
+
     <script>
-        const API = "TU_URL_DE_APPS_SCRIPT"; // Reemplaza esto
+        // URL configurada de tu Script
+        const API = "https://script.google.com/macros/s/AKfycbyR6RfbUC6r1ng_EXAMPLE_URL/exec"; 
+        
         let db = { clientes: [], modelos: [] };
         let cart = [];
 
         async function load() {
-            const res = await fetch(API);
-            db = await res.json();
-            renderUI();
+            try {
+                const res = await fetch(API);
+                db = await res.json();
+                renderSelectors();
+            } catch (e) {
+                console.error("Error cargando datos:", e);
+            }
         }
 
-        function renderUI() {
+        function renderSelectors() {
             const selC = document.getElementById('v_cliente');
-            // FIX: Validamos que existan los datos para evitar undefined
-            selC.innerHTML = db.clientes.map((c, i) => `<option value="${i}">${c.nombre || 'Sin nombre'}</option>`).join('');
-            document.getElementById('v_modelo_sel').innerHTML = db.modelos.map((m, i) => `<option value="${i}">${m.nombre || 'Modelo'}</option>`).join('');
+            const selM = document.getElementById('v_modelo_sel');
+
+            // Corrección de Undefined: Usamos nombres exactos de tu Excel
+            selC.innerHTML = db.clientes.map((c, i) => 
+                `<option value="${i}">${c.nombre || 'Sin Nombre'}</option>`).join('');
+            
+            selM.innerHTML = db.modelos.map((m, i) => 
+                `<option value="${i}">${m.nombre || 'Modelo sin nombre'}</option>`).join('');
         }
 
         function addItem() {
-            const m = db.modelos[document.getElementById('v_modelo_sel').value];
-            cart.push({ modelo: m.nombre, descripcion: '', precio: 0, cantidad: 1, subtotal: 0 });
-            renderCart();
-        }
+            const idx = document.getElementById('v_modelo_sel').value;
+            const m = db.modelos[idx];
+            if(!m) return;
 
-        function renderCart() {
-            let total = 0;
-            document.getElementById('v_tabla').innerHTML = cart.map((it, i) => {
-                total += it.subtotal;
-                return `<tr class="text-sm">
-                    <td class="py-4"><b>${it.modelo}</b><br><input type="text" placeholder="Detalle..." onchange="cart[${i}].descripcion=this.value" class="text-xs w-full text-blue-500 outline-none"></td>
-                    <td class="text-center"><input type="number" value="${it.cantidad}" onchange="updateCart(${i}, 'cantidad', this.value)" class="w-16 border rounded text-center"></td>
-                    <td class="text-right font-bold">$ <input type="number" value="${it.precio}" onchange="updateCart(${i}, 'precio', this.value)" class="w-20 border rounded text-right"></td>
-                    <td class="text-right font-bold">$ ${it.subtotal.toFixed(2)}</td>
-                    <td class="text-center"><button onclick="cart.splice(${i},1); renderCart();" class="text-red-400">✕</button></td>
-                </tr>`;
-            }).join('');
-            document.getElementById('v_total').innerText = total.toFixed(2);
+            cart.push({
+                modelo: m.nombre,
+                descripcion: '',
+                precio: 0,
+                cantidad: 1,
+                subtotal: 0
+            });
+            renderCart();
         }
 
         function updateCart(i, field, val) {
@@ -88,40 +131,98 @@
             renderCart();
         }
 
+        function renderCart() {
+            const tbody = document.getElementById('v_tabla');
+            let total = 0;
+
+            tbody.innerHTML = cart.map((it, i) => {
+                total += it.subtotal;
+                return `
+                <tr class="group hover:bg-slate-50 transition">
+                    <td class="py-4 px-2">
+                        <div class="font-bold text-slate-700">${it.modelo}</div>
+                        <input type="text" placeholder="Agregar nota (color, material...)" 
+                               onchange="cart[${i}].descripcion=this.value" 
+                               class="text-[11px] w-full text-blue-500 bg-transparent outline-none italic">
+                    </td>
+                    <td class="text-center px-2">
+                        <input type="number" value="${it.cantidad}" 
+                               onchange="updateCart(${i}, 'cantidad', this.value)" 
+                               class="w-14 border rounded-lg p-1 text-center font-bold text-slate-600">
+                    </td>
+                    <td class="text-right px-2">
+                        <div class="flex items-center justify-end gap-1">
+                            <span class="text-slate-400 text-xs">$</span>
+                            <input type="number" value="${it.precio}" 
+                                   onchange="updateCart(${i}, 'precio', this.value)" 
+                                   class="w-20 border rounded-lg p-1 text-right font-bold text-slate-600">
+                        </div>
+                    </td>
+                    <td class="text-right px-2 font-bold text-slate-700">$ ${it.subtotal.toFixed(2)}</td>
+                    <td class="text-center">
+                        <button onclick="cart.splice(${i},1); renderCart();" class="text-slate-300 hover:text-red-500 transition">✕</button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('v_total').innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+
         async function processSale() {
             const btn = document.getElementById('btn_sale');
-            const cliente = db.clientes[document.getElementById('v_cliente').value];
-            
-            // Generar folio N. Venta (Ej: ARM01)
+            const clienteIdx = document.getElementById('v_cliente').value;
+            const cliente = db.clientes[clienteIdx];
+
+            if(!cliente || cart.length === 0) return alert("Selecciona un cliente y agrega productos.");
+
+            // Generar folio N. Venta (Prefijo 3 letras + 01)
             const prefix = cliente.nombre.substring(0,3).toUpperCase();
-            const nVenta = prefix + "01"; 
+            const nVenta = prefix + "01";
 
             const payload = {
                 cliente: cliente.nombre,
-                destino: cliente.destino,
-                tel: cliente.tel,
-                trabajoDesc: document.getElementById('v_trabajo').value,
+                destino: cliente.destino || "No especificado",
+                tel: cliente.tel || "S/N",
+                trabajoDesc: document.getElementById('v_trabajo').value || "N/A",
                 nVenta: nVenta,
                 items: cart,
                 total: document.getElementById('v_total').innerText
             };
 
-            btn.disabled = true; btn.innerText = "GENERANDO PDF...";
-            const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'createSale', payload }) });
-            const data = await res.json();
-            if(data.status === "success") {
-                window.open(data.url, '_blank');
-                cart = []; renderCart();
-                alert("Nota Generada con éxito.");
+            btn.disabled = true;
+            btn.innerHTML = `<span class="flex items-center gap-2">
+                <svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                PROCESANDO...</span>`;
+
+            try {
+                const res = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'createSale', payload }) });
+                const data = await res.json();
+                
+                if(data.status === "success") {
+                    // Abrir descarga directa para evitar error de Drive en celular
+                    window.location.href = data.url; 
+                    
+                    alert("¡Venta Guardada! El PDF se abrirá en un momento.");
+                    cart = [];
+                    document.getElementById('v_trabajo').value = "";
+                    renderCart();
+                } else {
+                    alert("Error del servidor: " + data.message);
+                }
+            } catch (e) {
+                alert("Error de conexión. Revisa tu internet.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Generar PDF y Guardar Venta";
             }
-            btn.disabled = false; btn.innerText = "GENERAR PDF Y GUARDAR";
         }
 
         function showTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
 
+        // Carga inicial
         load();
     </script>
 </body>
