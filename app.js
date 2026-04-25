@@ -120,39 +120,73 @@ function calcularTotalGeneral() {
 
 // GUARDAR NOTA
 async function guardarNota() {
-  const cliente_id = document.getElementById("clienteSelect").value
-  const fecha = document.getElementById("fecha").value
+  try {
+    const cliente_id = document.getElementById("clienteSelect").value
+    const fecha = document.getElementById("fecha").value
 
-  if (!cliente_id) {
-    alert("Selecciona un cliente")
-    return
+    if (!cliente_id) {
+      alert("Selecciona un cliente")
+      return
+    }
+
+    if (productos.length === 0) {
+      alert("Agrega al menos un producto")
+      return
+    }
+
+    // 🔥 1. CREAR NOTA (CABECERA)
+    const { data: notaData, error: notaError } = await supabase
+      .from('notas')
+      .insert([{
+        cliente_id,
+        fecha
+      }])
+      .select()
+
+    if (notaError) {
+      console.error("ERROR NOTA:", notaError)
+      alert("Error al crear la nota")
+      return
+    }
+
+    const nota_id = notaData[0].id
+
+    // 🔥 2. PREPARAR PRODUCTOS
+    let detalles = []
+
+    for (let i = 0; i < productos.length; i++) {
+      const modelo_id = document.getElementById(`modelo_${i}`).value
+      const descripcion = document.getElementById(`desc_${i}`).value
+      const cantidad = Number(document.getElementById(`cant_${i}`).value)
+      const precio = Number(document.getElementById(`precio_${i}`).value)
+
+      if (!modelo_id || !cantidad || !precio) continue
+
+      detalles.push({
+        nota_id,
+        modelo_id,
+        descripcion,
+        cantidad,
+        precio,
+        total: cantidad * precio
+      })
+    }
+
+    // 🔥 3. INSERTAR TODOS LOS PRODUCTOS
+    const { error: detalleError } = await supabase
+      .from('detalle_notas')
+      .insert(detalles)
+
+    if (detalleError) {
+      console.error("ERROR DETALLES:", detalleError)
+      alert("Error al guardar productos")
+      return
+    }
+
+    alert("Nota guardada correctamente ✅")
+
+  } catch (err) {
+    console.error("ERROR GENERAL:", err)
+    alert("Error inesperado")
   }
-
-  if (productos.length === 0) {
-    alert("Agrega al menos un producto")
-    return
-  }
-
-  for (let i = 0; i < productos.length; i++) {
-    const modelo_id = document.getElementById(`modelo_${i}`).value
-    const descripcion = document.getElementById(`desc_${i}`).value
-    const cantidad = Number(document.getElementById(`cant_${i}`).value)
-    const precio = Number(document.getElementById(`precio_${i}`).value)
-
-    const total = cantidad * precio
-
-    await supabase.from('notas').insert([{
-      cliente_id,
-      modelo_id,
-      descripcion,
-      cantidad,
-      precio,
-      total,
-      fecha
-    }])
-  }
-
-  alert("Nota guardada completa")
 }
-
-window.guardarNota = guardarNota
