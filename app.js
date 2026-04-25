@@ -2,7 +2,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const supabase = createClient(
   'https://coywogyelfaspxlsctjv.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNveXdvZ3llbGZhc3B4bHNjdGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTkzMDksImV4cCI6MjA5MjYzNTMwOX0.BXT3hpn9CZevtc39KEVzkwyhjfCQ_087eyNp5UuFTS8'
+  'TU_KEY_AQUI'
 )
 
 // SIDEBAR
@@ -21,7 +21,7 @@ window.toggleSidebar = toggleSidebar
 window.mostrarSeccion = mostrarSeccion
 
 
-// CALCULO TOTAL
+// TOTAL
 function calcularTotal() {
   const cantidad = Number(document.getElementById("cantidad").value) || 0
   const precio = Number(document.getElementById("precio").value) || 0
@@ -74,7 +74,6 @@ async function guardarCliente() {
 
 window.guardarCliente = guardarCliente
 
-
 async function cargarClientes() {
   const { data, error } = await supabase
     .from('clientes')
@@ -102,6 +101,51 @@ async function cargarClientes() {
 }
 
 
+// MODELOS
+async function guardarModelo() {
+  const nombre = document.getElementById("nombreModelo").value
+
+  const { error } = await supabase
+    .from('modelos')
+    .insert([{ nombre }])
+
+  if (error) {
+    alert(error.message)
+  } else {
+    alert("Modelo guardado")
+    cargarModelos()
+  }
+}
+
+window.guardarModelo = guardarModelo
+
+async function cargarModelos() {
+  const { data, error } = await supabase
+    .from('modelos')
+    .select('*')
+
+  if (error) return alert(error.message)
+
+  const select = document.getElementById("modeloSelect")
+  select.innerHTML = '<option value="">Seleccionar modelo</option>'
+
+  const lista = document.getElementById("listaModelos")
+  lista.innerHTML = ""
+
+  data.forEach(modelo => {
+
+    const option = document.createElement("option")
+    option.value = modelo.id
+    option.textContent = modelo.nombre
+    select.appendChild(option)
+
+    const div = document.createElement("div")
+    div.innerHTML = modelo.nombre
+    lista.appendChild(div)
+  })
+}
+
+
 // HISTORIAL
 async function cargarNotas() {
   const { data, error } = await supabase
@@ -117,7 +161,7 @@ async function cargarNotas() {
     const div = document.createElement("div")
     div.innerHTML = `
       <p>${nota.descripcion}</p>
-      <p>${nota.total}</p>
+      <p>Total: $${nota.total}</p>
     `
     lista.appendChild(div)
   })
@@ -126,5 +170,6 @@ async function cargarNotas() {
 window.cargarNotas = cargarNotas
 
 
-// INICIAL
+// INICIO
 cargarClientes()
+cargarModelos()
