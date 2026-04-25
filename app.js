@@ -49,3 +49,17 @@ async function guardarNota() {
 }
 
 window.guardarNota = guardarNota
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("activo")
+}
+
+function mostrarSeccion(id) {
+  document.querySelectorAll(".seccion").forEach(sec => {
+    sec.style.display = "none"
+  })
+
+  document.getElementById(id).style.display = "block"
+}
+
+window.toggleSidebar = toggleSidebar
+window.mostrarSeccion = mostrarSeccion
