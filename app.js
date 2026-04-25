@@ -5,29 +5,13 @@ const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNveXdvZ3llbGZhc3B4bHNjdGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTkzMDksImV4cCI6MjA5MjYzNTMwOX0.BXT3hpn9CZevtc39KEVzkwyhjfCQ_087eyNp5UuFTS8'
 )
 
-// ESPERAR QUE CARGUE EL HTML
+// ====== CARGA INICIAL ======
 document.addEventListener("DOMContentLoaded", () => {
   cargarClientes()
 })
 
 
-// SIDEBAR
-function toggleSidebar() {
-  document.getElementById("sidebar").classList.toggle("activo")
-}
-
-function mostrarSeccion(id) {
-  document.querySelectorAll(".seccion").forEach(sec => {
-    sec.style.display = "none"
-  })
-  document.getElementById(id).style.display = "block"
-}
-
-window.toggleSidebar = toggleSidebar
-window.mostrarSeccion = mostrarSeccion
-
-
-// CLIENTES
+// ====== CLIENTES ======
 async function cargarClientes() {
   const { data, error } = await supabase.from('clientes').select('*')
 
@@ -49,7 +33,7 @@ async function cargarClientes() {
 }
 
 
-// MODELOS (para productos)
+// ====== MODELOS ======
 async function cargarModelosEnSelect(id) {
   const { data, error } = await supabase.from('modelos').select('*')
 
@@ -71,7 +55,7 @@ async function cargarModelosEnSelect(id) {
 }
 
 
-// MULTIPLES PRODUCTOS
+// ====== PRODUCTOS ======
 let productos = []
 
 function agregarProducto() {
@@ -93,7 +77,6 @@ function agregarProducto() {
 
   productos.push({})
 
-  // 🔥 aquí cargamos modelos correctamente
   cargarModelosEnSelect(`modelo_${index}`)
 
   document.getElementById(`cant_${index}`).addEventListener("input", calcularTotalGeneral)
@@ -103,7 +86,7 @@ function agregarProducto() {
 window.agregarProducto = agregarProducto
 
 
-// TOTAL GENERAL
+// ====== TOTAL ======
 function calcularTotalGeneral() {
   let total = 0
 
@@ -118,7 +101,7 @@ function calcularTotalGeneral() {
 }
 
 
-// GUARDAR NOTA
+// ====== GUARDAR NOTA (PROFESIONAL) ======
 async function guardarNota() {
   try {
     const cliente_id = document.getElementById("clienteSelect").value
@@ -134,13 +117,10 @@ async function guardarNota() {
       return
     }
 
-    // ✅ SOLO ESTO VA EN NOTAS
+    // 🔹 1. CREAR NOTA
     const { data: notaData, error: notaError } = await supabase
       .from('notas')
-      .insert([{
-        cliente_id,
-        fecha
-      }])
+      .insert([{ cliente_id, fecha }])
       .select()
 
     if (notaError) {
@@ -151,6 +131,7 @@ async function guardarNota() {
 
     const nota_id = notaData[0].id
 
+    // 🔹 2. CREAR DETALLES
     let detalles = []
 
     for (let i = 0; i < productos.length; i++) {
@@ -171,6 +152,7 @@ async function guardarNota() {
       })
     }
 
+    // 🔹 3. INSERTAR PRODUCTOS
     const { error: detalleError } = await supabase
       .from('detalle_notas')
       .insert(detalles)
@@ -188,4 +170,5 @@ async function guardarNota() {
     alert("Error inesperado")
   }
 }
+
 window.guardarNota = guardarNota
