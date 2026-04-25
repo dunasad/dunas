@@ -25,26 +25,46 @@
 
     <!-- NOTAS -->
     <div id="notas" class="seccion">
-      <h2>Crear Nota</h2>
+  <h2>Crear Nota</h2>
 
-      <select id="clienteSelect"></select><br><br>
+  <div class="form-grid">
 
-      <input id="fecha" type="date"><br><br>
-
-      <input id="folio" placeholder="Folio"><br><br>
-      <input id="numero_nota" placeholder="No. Nota"><br><br>
-
-      <select id="modeloSelect"></select><br><br>
-
-      <input id="descripcion" placeholder="Descripción"><br><br>
-
-      <input id="cantidad" type="number" placeholder="Cantidad">
-      <input id="precio" type="number" placeholder="Precio"><br><br>
-
-      <p>Total: $<span id="total">0</span></p>
-
-      <button onclick="guardarNota()">Guardar Nota</button>
+    <div>
+      <label>Cliente</label>
+      <select id="clienteSelect"></select>
     </div>
+
+    <div>
+      <label>Fecha</label>
+      <input id="fecha" type="date">
+    </div>
+
+    <div>
+      <label>Modelo</label>
+      <select id="modeloSelect"></select>
+    </div>
+
+    <div>
+      <label>Descripción</label>
+      <input id="descripcion" placeholder="Color, talla, etc">
+    </div>
+
+    <div>
+      <label>Cantidad</label>
+      <input id="cantidad" type="number">
+    </div>
+
+    <div>
+      <label>Precio</label>
+      <input id="precio" type="number">
+    </div>
+
+  </div>
+
+  <h3>Total: $<span id="total">0</span></h3>
+
+  <button class="btn" onclick="guardarNota()">Guardar Nota</button>
+</div>
 
     <!-- HISTORIAL -->
     <div id="historial" class="seccion" style="display:none;">
