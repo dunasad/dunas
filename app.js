@@ -134,7 +134,7 @@ async function guardarNota() {
       return
     }
 
-    // 🔥 1. CREAR NOTA (CABECERA)
+    // ✅ SOLO ESTO VA EN NOTAS
     const { data: notaData, error: notaError } = await supabase
       .from('notas')
       .insert([{
@@ -145,13 +145,12 @@ async function guardarNota() {
 
     if (notaError) {
       console.error("ERROR NOTA:", notaError)
-      alert("Error al crear la nota")
+      alert(notaError.message)
       return
     }
 
     const nota_id = notaData[0].id
 
-    // 🔥 2. PREPARAR PRODUCTOS
     let detalles = []
 
     for (let i = 0; i < productos.length; i++) {
@@ -172,14 +171,13 @@ async function guardarNota() {
       })
     }
 
-    // 🔥 3. INSERTAR TODOS LOS PRODUCTOS
     const { error: detalleError } = await supabase
       .from('detalle_notas')
       .insert(detalles)
 
     if (detalleError) {
       console.error("ERROR DETALLES:", detalleError)
-      alert("Error al guardar productos")
+      alert(detalleError.message)
       return
     }
 
