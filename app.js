@@ -5,6 +5,12 @@ const supabase = createClient(
   'TU_KEY_AQUI'
 )
 
+// ESPERAR QUE CARGUE EL HTML
+document.addEventListener("DOMContentLoaded", () => {
+  cargarClientes()
+})
+
+
 // SIDEBAR
 function toggleSidebar() {
   document.getElementById("sidebar").classList.toggle("activo")
@@ -23,7 +29,11 @@ window.mostrarSeccion = mostrarSeccion
 
 // CLIENTES
 async function cargarClientes() {
-  const { data } = await supabase.from('clientes').select('*')
+  const { data, error } = await supabase.from('clientes').select('*')
+
+  console.log("CLIENTES:", data, error)
+
+  if (error) return alert(error.message)
 
   const select = document.getElementById("clienteSelect")
   if (!select) return
@@ -39,14 +49,18 @@ async function cargarClientes() {
 }
 
 
-// MODELOS
-async function cargarModelos() {
-  const { data } = await supabase.from('modelos').select('*')
+// MODELOS (para productos)
+async function cargarModelosEnSelect(id) {
+  const { data, error } = await supabase.from('modelos').select('*')
 
-  const select = document.getElementById("modeloSelect")
+  console.log("MODELOS:", data, error)
+
+  if (error) return alert(error.message)
+
+  const select = document.getElementById(id)
   if (!select) return
 
-  select.innerHTML = '<option value="">Seleccionar modelo</option>'
+  select.innerHTML = '<option value="">Modelo</option>'
 
   data.forEach(m => {
     const option = document.createElement("option")
@@ -79,6 +93,7 @@ function agregarProducto() {
 
   productos.push({})
 
+  // 🔥 aquí cargamos modelos correctamente
   cargarModelosEnSelect(`modelo_${index}`)
 
   document.getElementById(`cant_${index}`).addEventListener("input", calcularTotalGeneral)
@@ -86,21 +101,6 @@ function agregarProducto() {
 }
 
 window.agregarProducto = agregarProducto
-
-
-async function cargarModelosEnSelect(id) {
-  const { data } = await supabase.from('modelos').select('*')
-
-  const select = document.getElementById(id)
-  select.innerHTML = '<option value="">Modelo</option>'
-
-  data.forEach(m => {
-    const option = document.createElement("option")
-    option.value = m.id
-    option.textContent = m.nombre
-    select.appendChild(option)
-  })
-}
 
 
 // TOTAL GENERAL
@@ -122,6 +122,16 @@ function calcularTotalGeneral() {
 async function guardarNota() {
   const cliente_id = document.getElementById("clienteSelect").value
   const fecha = document.getElementById("fecha").value
+
+  if (!cliente_id) {
+    alert("Selecciona un cliente")
+    return
+  }
+
+  if (productos.length === 0) {
+    alert("Agrega al menos un producto")
+    return
+  }
 
   for (let i = 0; i < productos.length; i++) {
     const modelo_id = document.getElementById(`modelo_${i}`).value
@@ -146,8 +156,3 @@ async function guardarNota() {
 }
 
 window.guardarNota = guardarNota
-
-
-// INICIO
-cargarClientes()
-cargarModelos()
