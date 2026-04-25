@@ -177,3 +177,91 @@ window.cargarNotas = cargarNotas
 // INICIO
 cargarClientes()
 cargarModelos()
+let productos = []
+
+function agregarProducto() {
+  const contenedor = document.getElementById("productos")
+
+  const index = productos.length
+
+  const div = document.createElement("div")
+  div.classList.add("producto")
+
+  div.innerHTML = `
+    <select id="modelo_${index}"></select>
+    <input id="desc_${index}" placeholder="Descripción">
+    <input id="cant_${index}" type="number" placeholder="Cantidad">
+    <input id="precio_${index}" type="number" placeholder="Precio">
+  `
+
+  contenedor.appendChild(div)
+
+  productos.push({})
+
+  cargarModelosEnSelect(`modelo_${index}`)
+
+  document.getElementById(`cant_${index}`).addEventListener("input", calcularTotalGeneral)
+  document.getElementById(`precio_${index}`).addEventListener("input", calcularTotalGeneral)
+}
+
+
+// Cargar modelos en cada select nuevo
+async function cargarModelosEnSelect(id) {
+  const { data } = await supabase.from('modelos').select('*')
+
+  const select = document.getElementById(id)
+  select.innerHTML = '<option value="">Modelo</option>'
+
+  data.forEach(m => {
+    const option = document.createElement("option")
+    option.value = m.id
+    option.textContent = m.nombre
+    select.appendChild(option)
+  })
+}
+
+
+// Calcular total de TODOS los productos
+function calcularTotalGeneral() {
+  let total = 0
+
+  productos.forEach((_, i) => {
+    const cant = Number(document.getElementById(`cant_${i}`)?.value) || 0
+    const precio = Number(document.getElementById(`precio_${i}`)?.value) || 0
+
+    total += cant * precio
+  })
+
+  document.getElementById("total").textContent = total.toFixed(2)
+}
+
+
+// Guardar nota con múltiples productos
+async function guardarNota() {
+  const cliente_id = document.getElementById("clienteSelect").value
+  const fecha = document.getElementById("fecha").value
+
+  let totalNota = 0
+
+  for (let i = 0; i < productos.length; i++) {
+    const modelo_id = document.getElementById(`modelo_${i}`).value
+    const descripcion = document.getElementById(`desc_${i}`).value
+    const cantidad = Number(document.getElementById(`cant_${i}`).value)
+    const precio = Number(document.getElementById(`precio_${i}`).value)
+
+    const total = cantidad * precio
+    totalNota += total
+
+    await supabase.from('notas').insert([{
+      cliente_id,
+      modelo_id,
+      descripcion,
+      cantidad,
+      precio,
+      total,
+      fecha
+    }])
+  }
+
+  alert("Nota guardada completa ✅")
+}
