@@ -101,3 +101,14 @@ input, select {
     grid-template-columns: 1fr;
   }
 }
+.producto {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+}
+
+.producto input, .producto select {
+  display: block;
+  margin-bottom: 5px;
+}
