@@ -124,7 +124,12 @@ async function cargarModelos() {
     .from('modelos')
     .select('*')
 
-  if (error) return alert(error.message)
+  console.log("MODELOS:", data, error)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
 
   const select = document.getElementById("modeloSelect")
   select.innerHTML = '<option value="">Seleccionar modelo</option>'
@@ -133,14 +138,13 @@ async function cargarModelos() {
   lista.innerHTML = ""
 
   data.forEach(modelo => {
-
     const option = document.createElement("option")
     option.value = modelo.id
     option.textContent = modelo.nombre
     select.appendChild(option)
 
     const div = document.createElement("div")
-    div.innerHTML = modelo.nombre
+    div.textContent = modelo.nombre
     lista.appendChild(div)
   })
 }
