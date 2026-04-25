@@ -188,3 +188,4 @@ async function guardarNota() {
     alert("Error inesperado")
   }
 }
+window.guardarNota = guardarNota
