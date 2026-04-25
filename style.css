@@ -1,0 +1,51 @@
+body {
+  margin: 0;
+  font-family: Arial;
+}
+
+.app {
+  display: flex;
+}
+
+.sidebar {
+  width: 200px;
+  background: #111;
+  color: white;
+  height: 100vh;
+  padding: 10px;
+}
+
+.sidebar button {
+  width: 100%;
+  margin: 5px 0;
+  padding: 10px;
+  background: #333;
+  color: white;
+  border: none;
+}
+
+.logo {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.contenido {
+  flex: 1;
+  padding: 20px;
+}
+
+.menu {
+  font-size: 20px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: absolute;
+    left: -200px;
+    transition: 0.3s;
+  }
+
+  .sidebar.activo {
+    left: 0;
+  }
+}
