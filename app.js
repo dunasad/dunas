@@ -4,78 +4,93 @@ const headers = { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Conten
 
 let appData = { clientes: [], modelos: [], notas: [] };
 
-// LOGIN
+// --- ACCESO REAL ---
 async function checkAccess() {
     const user = document.getElementById('userInput').value;
     const pass = document.getElementById('passInput').value;
     const btn = document.getElementById('btnLogin');
 
-    if (!user || !pass) return alert("Completa los campos");
+    if (!user || !pass) return alert("Ingresa usuario y contraseña");
     btn.disabled = true;
 
     try {
         const response = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { headers });
         const data = await response.json();
 
-        if (data.length > 0) {
+        if (data && data.length > 0) {
             document.getElementById('login-screen').classList.add('d-none');
             document.getElementById('main-app').classList.remove('d-none');
             await init();
         } else {
-            alert("Credenciales incorrectas");
+            alert("Usuario o contraseña incorrectos");
             btn.disabled = false;
         }
-    } catch (e) { console.error(e); btn.disabled = false; }
+    } catch (e) { 
+        console.error("Error Login:", e); 
+        alert("Error de conexión con el servidor");
+        btn.disabled = false; 
+    }
 }
 
-// INICIALIZACIÓN
+// --- INICIALIZACIÓN ---
 async function init() {
     await Promise.all([fetchClientes(), fetchModelos()]);
     renderSelectors();
     addItem();
 }
 
-// NAVEGACIÓN
+// --- NAVEGACIÓN CORREGIDA ---
 window.showSection = (section) => {
     document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
     document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
 
     const sec = document.getElementById('sec-' + section);
     const menu = document.getElementById('menu-' + section);
+    
     if(sec) sec.classList.remove('d-none');
     if(menu) menu.classList.add('active');
 
-    document.getElementById('sectionTitle').innerText = section.charAt(0).toUpperCase() + section.slice(1);
+    const titulos = { 'notas': 'Crear Nota', 'historial': 'Historial de Ventas', 'clientes': 'Clientes', 'modelos': 'Modelos' };
+    document.getElementById('sectionTitle').innerText = titulos[section] || 'Panel';
+
     if(section === 'historial') fetchHistorial();
 };
 
-// HISTORIAL
+// --- HISTORIAL (CON RELACIÓN A CLIENTES) ---
 async function fetchHistorial() {
     const tbody = document.getElementById('tablaHistorialBody');
-    tbody.innerHTML = "<tr><td colspan='4' class='text-center'>Cargando...</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='4' class='text-center py-4'>Cargando historial...</td></tr>";
 
     try {
         const res = await fetch(`${SB_URL}/notas?select=*,clientes(nombre)&order=created_at.desc`, { headers });
         const notas = await res.json();
         
+        if (!notas || notas.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='4' class='text-center py-4'>No hay notas registradas</td></tr>";
+            return;
+        }
+
         tbody.innerHTML = notas.map(n => `
             <tr>
                 <td class="px-4 small">${new Date(n.created_at).toLocaleDateString()}</td>
-                <td class="fw-bold">${n.clientes ? n.clientes.nombre : 'S/N'}</td>
-                <td class="text-danger fw-bold">$${parseFloat(n.total || 0).toFixed(2)}</td>
+                <td class="fw-bold">${n.clientes ? n.clientes.nombre : 'Sin Cliente'}</td>
+                <td class="text-primary fw-bold">$${parseFloat(n.total || 0).toFixed(2)}</td>
                 <td class="text-end px-4">
-                    <button class="btn btn-sm btn-light" onclick="alert('Próximamente Formato')"><i class="bi bi-printer"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')"><i class="bi bi-trash"></i></button>
+                    <button class="btn btn-sm btn-light border" title="Imprimir"><i class="bi bi-printer"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>`).join('');
-    } catch (e) { tbody.innerHTML = "<tr><td colspan='4'>Error de conexión</td></tr>"; }
+    } catch (e) { 
+        tbody.innerHTML = "<tr><td colspan='4' class='text-center text-danger'>Error al cargar datos</td></tr>"; 
+    }
 }
 
-// GUARDAR NOTA
+// --- GUARDAR NOTA ---
 window.guardarNota = async () => {
     const clienteId = document.getElementById('selCliente').value;
     const total = parseFloat(document.getElementById('totalTxt').innerText) || 0;
-    if(!clienteId) return alert("Elige un cliente");
+    
+    if(!clienteId) return alert("Por favor selecciona un cliente");
 
     try {
         const resNota = await fetch(`${SB_URL}/notas`, {
@@ -91,27 +106,36 @@ window.guardarNota = async () => {
             detalles.push({
                 nota_id: notaId,
                 modelo: row.querySelector('.select-modelo').value,
-                cantidad: parseInt(row.querySelector('.input-cant').value),
-                precio: parseFloat(row.querySelector('.input-precio').value)
+                cantidad: parseInt(row.querySelector('.input-cant').value) || 0,
+                precio: parseFloat(row.querySelector('.input-precio').value) || 0
             });
         });
 
         await fetch(`${SB_URL}/detalle_notas`, { method: 'POST', headers, body: JSON.stringify(detalles) });
-        notify("Guardado con éxito");
+        
+        notify("¡Nota guardada correctamente!");
         document.getElementById('itemsContainer').innerHTML = "";
+        document.getElementById('totalTxt').innerText = "0.00";
         addItem();
-    } catch (e) { alert("Error al guardar"); }
+    } catch (e) { 
+        console.error(e);
+        alert("Error al guardar la nota"); 
+    }
 };
 
-// FUNCIONES AUXILIARES
+// --- UTILIDADES ---
 window.addItem = () => {
     const id = Date.now();
     const html = `
-        <div class="row g-2 mb-3 item-row" id="item-${id}">
-            <div class="col-6"><select class="form-select border-0 bg-light select-modelo">${appData.modelos.map(m => `<option>${m.nombre}</option>`).join('')}</select></div>
+        <div class="row g-2 mb-3 item-row align-items-center" id="item-${id}">
+            <div class="col-5">
+                <select class="form-select border-0 bg-light select-modelo">
+                    ${appData.modelos.map(m => `<option>${m.nombre}</option>`).join('')}
+                </select>
+            </div>
             <div class="col-2"><input type="number" class="form-control border-0 bg-light input-cant" value="1" oninput="calcularTotal()"></div>
-            <div class="col-3"><input type="number" class="form-control border-0 bg-light input-precio" placeholder="Precio" oninput="calcularTotal()"></div>
-            <div class="col-1"><button class="btn text-danger" onclick="document.getElementById('item-${id}').remove(); calcularTotal();"><i class="bi bi-trash"></i></button></div>
+            <div class="col-4"><input type="number" class="form-control border-0 bg-light input-precio" placeholder="Precio" oninput="calcularTotal()"></div>
+            <div class="col-1 text-end"><button class="btn text-danger p-0" onclick="document.getElementById('item-${id}').remove(); calcularTotal();"><i class="bi bi-trash-fill"></i></button></div>
         </div>`;
     document.getElementById('itemsContainer').insertAdjacentHTML('beforeend', html);
 };
@@ -119,7 +143,9 @@ window.addItem = () => {
 window.calcularTotal = () => {
     let t = 0;
     document.querySelectorAll('.item-row').forEach(r => {
-        t += (r.querySelector('.input-cant').value * r.querySelector('.input-precio').value);
+        const c = r.querySelector('.input-cant').value || 0;
+        const p = r.querySelector('.input-precio').value || 0;
+        t += (c * p);
     });
     document.getElementById('totalTxt').innerText = t.toFixed(2);
 };
@@ -135,7 +161,7 @@ async function fetchModelos() {
 }
 
 function renderSelectors() {
-    document.getElementById('selCliente').innerHTML = '<option value="">Seleccionar Cliente</option>' + 
+    document.getElementById('selCliente').innerHTML = '<option value="">-- Seleccionar Cliente --</option>' + 
         appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
 }
 
@@ -144,3 +170,9 @@ function notify(m) {
     const t = new bootstrap.Toast(document.getElementById('liveToast'));
     t.show();
 }
+
+window.eliminarNota = async (id) => {
+    if(!confirm("¿Eliminar esta nota permanentemente?")) return;
+    await fetch(`${SB_URL}/notas?id=eq.${id}`, { method: 'DELETE', headers });
+    fetchHistorial();
+};
