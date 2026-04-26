@@ -90,14 +90,25 @@ async function fetchModelos() {
 }
 
 // 4. FUNCIONES DE UI
-function showSection(section) {
+ffunction showSection(section) {
+    // Ocultar todas las secciones
     document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
-    document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
-    document.getElementById('sec-' + section).classList.remove('d-none');
-    document.getElementById('menu-' + section).classList.add('active');
+    
+    // Quitar "active" de los menús (con validación de existencia)
+    document.querySelectorAll('#sidebar li').forEach(li => {
+        if (li) li.classList.remove('active');
+    });
+
+    // Mostrar la sección seleccionada
+    const targetSection = document.getElementById('sec-' + section);
+    const targetMenu = document.getElementById('menu-' + section);
+
+    if (targetSection) targetSection.classList.remove('d-none');
+    if (targetMenu) targetMenu.classList.add('active');
     
     const titulos = { 'notas': 'Crear Nota', 'historial': 'Historial', 'clientes': 'Clientes', 'modelos': 'Modelos' };
-    document.getElementById('sectionTitle').innerText = titulos[section];
+    const titleEl = document.getElementById('sectionTitle');
+    if (titleEl) titleEl.innerText = titulos[section] || 'Panel';
 }
 
 function notify(msg, color = 'bg-dark') {
@@ -227,13 +238,18 @@ async function ejecutarEliminacion() {
 
 // 7. NOTAS (Items Dinámicos)
 window.addItem = () => {
+    const container = document.getElementById('itemsContainer');
+    if (!container) return; // Seguridad por si el contenedor no existe
+
     const id = Date.now();
     const html = `
         <div class="item-row mb-3 p-3 bg-light rounded-3 position-relative" id="item-${id}">
             <div class="row g-2">
                 <div class="col-12 col-md-4">
                     <label class="small text-muted fw-bold">MODELO</label>
-                    <select class="form-select border-0 select-modelo">${appData.modelos.map(m => `<option>${m.nombre}</option>`).join('')}</select>
+                    <select class="form-select border-0 select-modelo">
+                        ${appData.modelos.map(m => `<option>${m.nombre}</option>`).join('')}
+                    </select>
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="small text-muted fw-bold">CANTIDAD</label>
@@ -244,11 +260,13 @@ window.addItem = () => {
                     <input type="number" class="form-control border-0 input-precio" value="0" oninput="calcularTotal()">
                 </div>
                 <div class="col-12 col-md-2 d-flex align-items-end">
-                    <button class="btn btn-outline-danger border-0 w-100" onclick="removeItem(${id})"><i class="bi bi-trash"></i></button>
+                    <button class="btn btn-outline-danger border-0 w-100" onclick="removeItem(${id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
             </div>
         </div>`;
-    document.getElementById('itemsContainer').insertAdjacentHTML('beforeend', html);
+    container.insertAdjacentHTML('beforeend', html);
     calcularTotal();
 };
 
