@@ -5,88 +5,96 @@ const headers = {
     "apikey": SB_KEY,
     "Authorization": `Bearer ${SB_KEY}`,
     "Content-Type": "application/json",
-    "Prefer": "return=minimal" // Evita errores 401 al no pedir lectura tras escritura
+    "Prefer": "return=minimal"
 };
 
+// --- VARIABLES GLOBALES ---
 let appData = { clientes: [], modelos: [] };
 let objetoEliminar = { tabla: '', id: '', nombre: '' };
 let modalConf, modalCli, modalMod;
 
-// 1. INICIALIZACIÓN (Esperamos a que el DOM esté listo)
-window.addEventListener('DOMContentLoaded', () => {
-    init();
-});
-
+// 1. FUNCIÓN DE LOGIN (CONSULTA A SUPABASE)
 async function checkAccess() {
     const user = document.getElementById('userInput').value;
     const pass = document.getElementById('passInput').value;
     const btn = document.getElementById('btnLogin');
 
-    if (!user || !pass) return alert("Completa los campos");
+    if (!user || !pass) return alert("Por favor, completa los campos.");
 
     btn.disabled = true;
     btn.innerText = "Verificando...";
 
     try {
-        // Consultamos si existe un usuario con esas credenciales
-        const res = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { headers });
-        const data = await res.json();
+        // Consultamos la tabla 'usuarios' que creamos en Supabase
+        const response = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { 
+            method: 'GET', 
+            headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } 
+        });
+        const data = await response.json();
 
-        if (data.length > 0) {
-            // Guardamos el nombre en una variable o localStorage si quieres que la sesión persista
+        if (data && data.length > 0) {
             const nombreUsuario = data[0].nombre;
-            
-            document.getElementById('login-screen').remove();
+            // Ocultamos login y mostramos app
+            document.getElementById('login-screen').classList.add('d-none');
             document.getElementById('main-app').classList.remove('d-none');
             
             notify(`Bienvenido, ${nombreUsuario}`, "bg-success");
-            init(); // Arrancamos la carga de la app
+            
+            // Inicializamos la app después del login
+            init();
         } else {
-            alert("Usuario o contraseña incorrectos");
+            alert("Usuario o contraseña incorrectos.");
             btn.disabled = false;
-            btn.innerText = "ENTRAR";
+            btn.innerText = "ENTRAR AL PANEL";
         }
     } catch (error) {
         console.error(error);
-        alert("Error de conexión");
+        alert("Error de conexión con el servidor.");
         btn.disabled = false;
-        btn.innerText = "ENTRAR";
+        btn.innerText = "ENTRAR AL PANEL";
     }
 }
 
+// 2. INICIALIZACIÓN DE LA APP
 async function init() {
     try {
-        // Inicializar instancias de modales
+        // Inicializamos instancias de modales de Bootstrap
         modalConf = new bootstrap.Modal(document.getElementById('modalConfirmar'));
         modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
         modalMod = new bootstrap.Modal(document.getElementById('modalModelo'));
 
+        // Cargamos datos iniciales
         await Promise.all([fetchClientes(), fetchModelos()]);
         renderSelectors();
         renderTablas();
-        addItem();
-
-        document.getElementById('sidebarCollapse').onclick = () => {
-            document.getElementById('sidebar').classList.toggle('active');
-        };
         
+        // Si tienes la función addItem() definida para las notas:
+        if (typeof addItem === 'function') addItem();
+
+        // Control del Sidebar
+        const sideBtn = document.getElementById('sidebarCollapse');
+        if(sideBtn) {
+            sideBtn.onclick = () => document.getElementById('sidebar').classList.toggle('active');
+        }
+        
+        // Botón de confirmación de eliminación
         document.getElementById('btnConfirmarEliminar').onclick = ejecutarEliminacion;
 
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error al iniciar app:", e); }
 }
 
-// 2. FETCH DATOS
+// 3. FETCH DE DATOS
 async function fetchClientes() {
-    const res = await fetch(`${SB_URL}/clientes?select=*&order=nombre.asc`, { headers });
+    const res = await fetch(`${SB_URL}/clientes?select=*&order=nombre.asc`, { headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } });
     appData.clientes = await res.json();
 }
 
 async function fetchModelos() {
-    const res = await fetch(`${SB_URL}/modelos?select=*&order=nombre.asc`, { headers });
+    const res = await fetch(`${SB_URL}/modelos?select=*&order=nombre.asc`, { headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } });
     appData.modelos = await res.json();
 }
 
-// 3. NAVEGACIÓN Y UI
+// 4. NAVEGACIÓN
 function showSection(section) {
     document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
     document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
@@ -101,10 +109,11 @@ function notify(msg, color = 'bg-dark') {
     const toastEl = document.getElementById('liveToast');
     document.getElementById('toastMsg').innerText = msg;
     toastEl.className = `toast align-items-center text-white ${color} border-0 rounded-3`;
-    new bootstrap.Toast(toastEl).show();
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
 }
 
-// 4. GESTIÓN CLIENTES
+// 5. GESTIÓN DE CLIENTES
 window.abrirModalCliente = (id = null) => {
     document.getElementById('editClienteId').value = id || '';
     if(id) {
@@ -133,14 +142,14 @@ window.guardarCliente = async () => {
     const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers, body: JSON.stringify(data) });
     if(res.ok) {
         modalCli.hide();
-        notify("Cliente guardado", "bg-success");
+        notify("Cliente guardado con éxito", "bg-success");
         await fetchClientes();
         renderTablas();
         renderSelectors();
     }
 };
 
-// 5. GESTIÓN MODELOS
+// 6. GESTIÓN DE MODELOS
 window.abrirModalModelo = (id = null) => {
     document.getElementById('editModeloId').value = id || '';
     if(id) {
@@ -161,16 +170,16 @@ window.guardarModelo = async () => {
     const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers, body: JSON.stringify(data) });
     if(res.ok) {
         modalMod.hide();
-        notify("Modelo guardado", "bg-success");
+        notify("Modelo guardado con éxito", "bg-success");
         await fetchModelos();
         renderTablas();
     }
 };
 
-// 6. ELIMINACIÓN
+// 7. ELIMINACIÓN
 window.eliminarRegistro = (tabla, id, nombre) => {
     objetoEliminar = { tabla, id, nombre };
-    document.getElementById('confirmMsgText').innerText = `¿Eliminar a "${nombre}"?`;
+    document.getElementById('confirmMsgText').innerText = `¿Estás seguro de eliminar a "${nombre}"?`;
     modalConf.show();
 };
 
@@ -179,22 +188,26 @@ async function ejecutarEliminacion() {
     const { tabla, id } = objetoEliminar;
     const res = await fetch(`${SB_URL}/${tabla}?id=eq.${id}`, { method: 'DELETE', headers });
     if(res.ok) {
-        notify("Eliminado", "bg-danger");
+        notify("Registro eliminado", "bg-danger");
         tabla === 'clientes' ? await fetchClientes() : await fetchModelos();
         if(tabla === 'clientes') renderSelectors();
         renderTablas();
     }
 }
 
-// 7. RENDERIZADO
+// 8. RENDERIZADO
 function renderSelectors() {
     const sel = document.getElementById('selCliente');
-    sel.innerHTML = '<option value="">-- Seleccionar --</option>' + 
-        appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+    if(sel) {
+        sel.innerHTML = '<option value="">-- Seleccionar Cliente --</option>' + 
+            appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+    }
 }
 
 function renderTablas() {
-    document.getElementById('tablaClientesBody').innerHTML = appData.clientes.map(c => `
+    const tbCli = document.getElementById('tablaClientesBody');
+    if(tbCli) {
+        tbCli.innerHTML = appData.clientes.map(c => `
         <tr>
             <td class="px-4 fw-bold">${c.nombre}</td>
             <td class="text-muted small">${c.destino || '-'}</td>
@@ -204,8 +217,11 @@ function renderTablas() {
                 <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="eliminarRegistro('clientes', '${c.id}', '${c.nombre}')"><i class="bi bi-trash"></i></button>
             </td>
         </tr>`).join('');
+    }
 
-    document.getElementById('tablaModelosBody').innerHTML = appData.modelos.map(m => `
+    const tbMod = document.getElementById('tablaModelosBody');
+    if(tbMod) {
+        tbMod.innerHTML = appData.modelos.map(m => `
         <tr>
             <td class="px-4 fw-bold">${m.nombre}</td>
             <td class="text-end px-4">
@@ -213,8 +229,7 @@ function renderTablas() {
                 <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="eliminarRegistro('modelos', '${m.id}', '${m.nombre}')"><i class="bi bi-trash"></i></button>
             </td>
         </tr>`).join('');
+    }
 }
 
-// 8. FUNCIONES DE NOTAS (Simplificadas para el ejemplo)
-window.addItem = () => { /* lógica de agregar fila que ya tienes */ };
-window.guardarNota = async () => { /* lógica de guardar nota que ya tienes */ };
+// RECUERDA DEFINIR TUS FUNCIONES addItem() y guardarNota() AQUÍ SI NO LAS TIENES
