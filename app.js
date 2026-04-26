@@ -4,7 +4,7 @@ const headers = { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Conten
 
 let appData = { clientes: [], modelos: [], notas: [] };
 
-// LOGIN
+// --- ACCESO ---
 async function checkAccess() {
     const user = document.getElementById('userInput').value;
     const pass = document.getElementById('passInput').value;
@@ -15,19 +15,19 @@ async function checkAccess() {
             document.getElementById('login-screen').classList.add('d-none');
             document.getElementById('main-app').classList.remove('d-none');
             await init();
-        } else { alert("Error de acceso"); }
+        } else { alert("Credenciales incorrectas"); }
     } catch (e) { console.error(e); }
 }
 
-// INICIALIZACIÓN
+// --- INICIALIZACIÓN ---
 async function init() {
     await Promise.all([fetchClientes(), fetchModelos()]);
     renderSelectors();
-    renderTablas(); // Renderizar clientes y modelos en sus secciones
+    renderTablas();
     addItem();
 }
 
-// NAVEGACIÓN
+// --- NAVEGACIÓN ---
 window.showSection = (section) => {
     document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
     document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
@@ -38,23 +38,65 @@ window.showSection = (section) => {
     if(section === 'historial') fetchHistorial();
 };
 
-// --- GESTIÓN DE CLIENTES ---
-window.abrirModalCliente = () => { new bootstrap.Modal('#modalCliente').show(); };
+// --- GESTIÓN DE CLIENTES (CREAR / EDITAR) ---
+window.abrirModalCliente = (id = null) => {
+    const modal = new bootstrap.Modal('#modalCliente');
+    if (id) {
+        const c = appData.clientes.find(cli => cli.id == id);
+        document.getElementById('modalClienteTitulo').innerText = "Editar Cliente";
+        document.getElementById('editCliId').value = c.id;
+        document.getElementById('nomCli').value = c.nombre;
+        document.getElementById('telCli').value = c.telefono;
+    } else {
+        document.getElementById('modalClienteTitulo').innerText = "Nuevo Cliente";
+        document.getElementById('editCliId').value = "";
+        document.getElementById('nomCli').value = "";
+        document.getElementById('telCli').value = "";
+    }
+    modal.show();
+};
+
 window.guardarCliente = async () => {
+    const id = document.getElementById('editCliId').value;
     const nombre = document.getElementById('nomCli').value;
     const telefono = document.getElementById('telCli').value;
-    await fetch(`${SB_URL}/clientes`, { method: 'POST', headers, body: JSON.stringify({ nombre, telefono }) });
+    const body = JSON.stringify({ nombre, telefono });
+    
+    const url = id ? `${SB_URL}/clientes?id=eq.${id}` : `${SB_URL}/clientes`;
+    const method = id ? 'PATCH' : 'POST';
+
+    await fetch(url, { method, headers, body });
     bootstrap.Modal.getInstance('#modalCliente').hide();
     await fetchClientes();
     renderTablas();
     renderSelectors();
 };
 
-// --- GESTIÓN DE MODELOS ---
-window.abrirModalModelo = () => { new bootstrap.Modal('#modalModelo').show(); };
+// --- GESTIÓN DE MODELOS (CREAR / EDITAR) ---
+window.abrirModalModelo = (id = null) => {
+    const modal = new bootstrap.Modal('#modalModelo');
+    if (id) {
+        const m = appData.modelos.find(mod => mod.id == id);
+        document.getElementById('modalModeloTitulo').innerText = "Editar Modelo";
+        document.getElementById('editModId').value = m.id;
+        document.getElementById('nomMod').value = m.nombre;
+    } else {
+        document.getElementById('modalModeloTitulo').innerText = "Nuevo Modelo";
+        document.getElementById('editModId').value = "";
+        document.getElementById('nomMod').value = "";
+    }
+    modal.show();
+};
+
 window.guardarModelo = async () => {
+    const id = document.getElementById('editModId').value;
     const nombre = document.getElementById('nomMod').value;
-    await fetch(`${SB_URL}/modelos`, { method: 'POST', headers, body: JSON.stringify({ nombre }) });
+    const body = JSON.stringify({ nombre });
+    
+    const url = id ? `${SB_URL}/modelos?id=eq.${id}` : `${SB_URL}/modelos`;
+    const method = id ? 'PATCH' : 'POST';
+
+    await fetch(url, { method, headers, body });
     bootstrap.Modal.getInstance('#modalModelo').hide();
     await fetchModelos();
     renderTablas();
@@ -65,40 +107,80 @@ function renderTablas() {
     const tbodyCli = document.getElementById('tablaClientesBody');
     const tbodyMod = document.getElementById('tablaModelosBody');
     
-    tbodyCli.innerHTML = appData.clientes.map(c => `<tr><td class="px-4">${c.nombre}</td><td>${c.telefono || ''}</td><td class="text-end px-4"><button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('clientes','${c.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
-    tbodyMod.innerHTML = appData.modelos.map(m => `<tr><td class="px-4">${m.nombre}</td><td class="text-end px-4"><button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('modelos','${m.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
+    tbodyCli.innerHTML = appData.clientes.map(c => `
+        <tr>
+            <td class="px-4">${c.nombre}</td>
+            <td>${c.telefono || ''}</td>
+            <td class="text-end px-4">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalCliente('${c.id}')"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('clientes','${c.id}')"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('');
+
+    tbodyMod.innerHTML = appData.modelos.map(m => `
+        <tr>
+            <td class="px-4">${m.nombre}</td>
+            <td class="text-end px-4">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalModelo('${m.id}')"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('modelos','${m.id}')"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('');
 }
 
 window.eliminarRegistro = async (tabla, id) => {
-    if(!confirm("¿Eliminar registro?")) return;
+    if(!confirm("¿Seguro que quieres eliminar este registro?")) return;
     await fetch(`${SB_URL}/${tabla}?id=eq.${id}`, { method: 'DELETE', headers });
     tabla === 'clientes' ? await fetchClientes() : await fetchModelos();
     renderTablas();
     renderSelectors();
 };
 
-// --- EL RESTO DE FUNCIONES (HISTORIAL, NOTAS, ETC.) ---
+// --- HISTORIAL ---
 async function fetchHistorial() {
     const tbody = document.getElementById('tablaHistorialBody');
     const res = await fetch(`${SB_URL}/notas?select=*,clientes(nombre)&order=created_at.desc`, { headers });
     const notas = await res.json();
-    tbody.innerHTML = notas.map(n => `<tr><td class="px-4 small">${new Date(n.created_at).toLocaleDateString()}</td><td class="fw-bold">${n.clientes ? n.clientes.nombre : 'S/N'}</td><td class="text-primary fw-bold">$${n.total.toFixed(2)}</td><td class="text-end px-4"><button class="btn btn-sm btn-light border me-1"><i class="bi bi-printer"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
+    tbody.innerHTML = notas.map(n => `
+        <tr>
+            <td class="px-4 small">${new Date(n.created_at).toLocaleDateString()}</td>
+            <td class="fw-bold">${n.clientes ? n.clientes.nombre : 'S/N'}</td>
+            <td class="text-primary fw-bold">$${n.total.toFixed(2)}</td>
+            <td class="text-end px-4">
+                <button class="btn btn-sm btn-light border me-1"><i class="bi bi-printer"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('');
 }
 
+window.eliminarNota = async (id) => {
+    if(!confirm("¿Seguro que quieres eliminar esta nota de venta?")) return;
+    await fetch(`${SB_URL}/notas?id=eq.${id}`, { method: 'DELETE', headers });
+    fetchHistorial();
+};
+
+// --- VENTAS ---
 window.guardarNota = async () => {
     const clienteId = document.getElementById('selCliente').value;
     const total = parseFloat(document.getElementById('totalTxt').innerText);
-    const resNota = await fetch(`${SB_URL}/notas`, { method: 'POST', headers: { ...headers, "Prefer": "return=representation" }, body: JSON.stringify({ cliente_id: clienteId, total: total }) });
+    if(!clienteId || total <= 0) return alert("Selecciona un cliente y agrega productos");
+
+    const resNota = await fetch(`${SB_URL}/notas`, { 
+        method: 'POST', 
+        headers: { ...headers, "Prefer": "return=representation" }, 
+        body: JSON.stringify({ cliente_id: clienteId, total: total }) 
+    });
     const dataNota = await resNota.json();
     const notaId = dataNota[0].id;
+
     const detalles = Array.from(document.querySelectorAll('.item-row')).map(row => ({
         nota_id: notaId,
         modelo: row.querySelector('.select-modelo').value,
         cantidad: parseInt(row.querySelector('.input-cant').value),
         precio: parseFloat(row.querySelector('.input-precio').value)
     }));
+
     await fetch(`${SB_URL}/detalle_notas`, { method: 'POST', headers, body: JSON.stringify(detalles) });
-    alert("¡Nota guardada!");
+    alert("¡Nota guardada con éxito!");
     location.reload();
 };
 
@@ -116,5 +198,4 @@ window.calcularTotal = () => {
 
 async function fetchClientes() { const res = await fetch(`${SB_URL}/clientes?select=*&order=nombre.asc`, { headers }); appData.clientes = await res.json(); }
 async function fetchModelos() { const res = await fetch(`${SB_URL}/modelos?select=*&order=nombre.asc`, { headers }); appData.modelos = await res.json(); }
-function renderSelectors() { document.getElementById('selCliente').innerHTML = '<option value="">-- Cliente --</option>' + appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); }
-window.eliminarNota = async (id) => { if(confirm("¿Eliminar?")) { await fetch(`${SB_URL}/notas?id=eq.${id}`, { method: 'DELETE', headers }); fetchHistorial(); } };
+function renderSelectors() { document.getElementById('selCliente').innerHTML = '<option value="">-- Seleccionar Cliente --</option>' + appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); }
