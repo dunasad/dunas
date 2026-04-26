@@ -94,5 +94,45 @@ function calcularTotal() {
     });
     return total;
 }
+function addItem() {
+    const container = document.getElementById('itemsContainer');
+    const div = document.createElement('div');
+    div.className = 'item-row card p-3 mb-2 border-light shadow-sm';
+    
+    // Generamos las opciones del selector usando los modelos cargados de Supabase
+    const opcionesModelos = appData.modelos.map(m => 
+        `<option value="${m.id}">${m.nombre}</option>`
+    ).join('');
 
+    div.innerHTML = `
+        <div class="row g-2">
+            <div class="col-12 mb-2">
+                <select class="form-select sel-modelo fw-bold border-0 bg-light">
+                    ${opcionesModelos}
+                </select>
+            </div>
+            <div class="col-12 mb-2">
+                <input type="text" class="form-control form-control-sm in-desc border-0" placeholder="Detalle (ej: Color negro / Suela blanca)">
+            </div>
+            <div class="col-4">
+                <input type="number" class="form-control in-cant" placeholder="Cant." oninput="actualizarTotalInterfaz()">
+            </div>
+            <div class="col-4">
+                <input type="number" class="form-control in-precio" placeholder="Precio" oninput="actualizarTotalInterfaz()">
+            </div>
+            <div class="col-4 d-flex align-items-center justify-content-end">
+                <button class="btn btn-sm btn-outline-danger border-0" onclick="this.closest('.item-row').remove(); actualizarTotalInterfaz();">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    `;
+    container.appendChild(div);
+}
+
+// Función auxiliar para mostrar el total en tiempo real mientras escribes
+function actualizarTotalInterfaz() {
+    const total = calcularTotal();
+    document.getElementById('totalTxt').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+}
 window.onload = init;
