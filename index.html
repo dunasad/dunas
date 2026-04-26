@@ -3,29 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUNAS - Sistema de Notas</title>
+    <title>DUNAS STUDIO - Panel</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <!-- Bootstrap 5 y Iconos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f8f9fa; z-index: 9999; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .login-card {
+            width: 100%; max-width: 380px; padding: 2rem;
+            border: none; border-radius: 1.5rem; background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .wrapper.d-none { display: none !important; }
+    </style>
 </head>
 <body>
-<div id="login-screen">
-    <div class="card p-4 rounded-4 shadow-lg text-center" style="max-width: 350px; width: 90%;">
-        <img src="logo.png" width="100" class="mb-3 mx-auto">
-        <h5 class="fw-bold mb-3">Acceso DUNAS</h5>
-        <input type="text" id="userInput" class="form-control mb-2 text-center rounded-3" placeholder="Usuario">
-        <input type="password" id="passInput" class="form-control mb-3 text-center rounded-3" placeholder="Contraseña">
-        <button class="btn btn-primary w-100 rounded-pill py-2" id="btnLogin" onclick="checkAccess()">ENTRAR</button>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="login-screen">
+        <div class="login-card text-center">
+            <img src="logo.png" alt="DUNAS" width="120" class="mb-4 mx-auto d-block">
+            <h5 class="fw-bold mb-4">Acceso Restringido</h5>
+            <div class="mb-3 text-start">
+                <label class="form-label small fw-bold text-muted">USUARIO</label>
+                <input type="text" id="userInput" class="form-control bg-light border-0 py-2 px-3 rounded-3" placeholder="Tu usuario">
+            </div>
+            <div class="mb-4 text-start">
+                <label class="form-label small fw-bold text-muted">CONTRASEÑA</label>
+                <input type="password" id="passInput" class="form-control bg-light border-0 py-2 px-3 rounded-3" placeholder="••••••••">
+            </div>
+            <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnLogin" onclick="checkAccess()">
+                ENTRAR AL PANEL
+            </button>
+        </div>
     </div>
-</div>
-    <div class="wrapper">
+
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div class="wrapper d-none" id="main-app">
+        <!-- SIDEBAR -->
         <nav id="sidebar">
             <div class="sidebar-header">
-                <img src="logo.png" alt="" class="logo-img">
+                <img src="logo.png" alt="DUNAS" class="logo-img">
             </div>
-
             <ul class="list-unstyled components">
                 <li id="menu-notas" class="active" onclick="showSection('notas')">
                     <a href="#"><i class="bi bi-file-earmark-plus"></i> <span>Notas</span></a>
@@ -42,6 +69,7 @@
             </ul>
         </nav>
 
+        <!-- CONTENIDO -->
         <div id="content">
             <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
                 <div class="container-fluid">
@@ -53,6 +81,7 @@
             </nav>
 
             <div class="container-fluid px-4">
+                <!-- SECCIÓN: NOTAS -->
                 <div id="sec-notas" class="app-section">
                     <div class="card shadow-sm border-0 p-4 rounded-4">
                         <div class="mb-4">
@@ -75,6 +104,7 @@
                     </div>
                 </div>
 
+                <!-- SECCIÓN: CLIENTES -->
                 <div id="sec-clientes" class="app-section d-none">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold mb-0">Clientes</h4>
@@ -99,6 +129,7 @@
                     </div>
                 </div>
 
+                <!-- SECCIÓN: MODELOS -->
                 <div id="sec-modelos" class="app-section d-none">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold mb-0">Modelos</h4>
@@ -124,7 +155,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalCliente" tabindex="-1" aria-hidden="true" data-bs-focus="false">
+    <!-- MODAL CLIENTE -->
+    <div class="modal fade" id="modalCliente" tabindex="-1" data-bs-backdrop="static" data-bs-focus="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0 px-4 pt-4">
@@ -151,7 +183,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalModelo" tabindex="-1" aria-hidden="true" data-bs-focus="false">
+    <!-- MODAL MODELO -->
+    <div class="modal fade" id="modalModelo" tabindex="-1" data-bs-backdrop="static" data-bs-focus="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0 px-4 pt-4">
@@ -170,22 +203,24 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalConfirmar" tabindex="-1" aria-hidden="true" data-bs-focus="false">
+    <!-- MODAL CONFIRMAR ELIMINAR -->
+    <div class="modal fade" id="modalConfirmar" tabindex="-1" data-bs-focus="false">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-body text-center p-4">
                     <i class="bi bi-exclamation-triangle text-warning display-4 mb-3"></i>
                     <h5 class="fw-bold">¿Seguro?</h5>
-                    <p class="text-muted small mb-4" id="confirmMsgText">Esta acción no se puede deshacer.</p>
+                    <p class="text-muted small mb-4" id="confirmMsgText"></p>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-light w-100 rounded-3" data-bs-dismiss="modal">No</button>
-                        <button type="button" class="btn btn-danger w-100 rounded-3" id="btnConfirmarEliminar">Sí, eliminar</button>
+                        <button type="button" class="btn btn-danger w-100 rounded-3" id="btnConfirmarEliminar">Eliminar</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- TOAST NOTIFICACIÓN -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="liveToast" class="toast align-items-center text-white bg-dark border-0 rounded-3" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
@@ -195,6 +230,7 @@
         </div>
     </div>
 
+    <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="app.js"></script>
 </body>
