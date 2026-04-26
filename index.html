@@ -29,21 +29,22 @@
 
     <!-- PANTALLA DE LOGIN -->
     <div id="login-screen">
-        <div class="login-card text-center">
-            <img src="logo.png" alt="DUNAS" width="120" class="mb-4 mx-auto d-block">
-            <h5 class="fw-bold mb-4">Acceso Restringido</h5>
-            <div class="mb-3 text-start">
-                <label class="form-label small fw-bold text-muted">USUARIO</label>
-                <input type="text" id="userInput" class="form-control bg-light border-0 py-2 px-3 rounded-3" placeholder="Tu usuario">
-            </div>
-            <div class="mb-4 text-start">
-                <label class="form-label small fw-bold text-muted">CONTRASEÑA</label>
-                <input type="password" id="passInput" class="form-control bg-light border-0 py-2 px-3 rounded-3" placeholder="••••••••">
-            </div>
-            <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnLogin" onclick="checkAccess()">
-                ENTRAR AL PANEL
-            </button>
+    <div class="login-card text-center">
+        <img src="logo.png" alt="DUNAS" width="120" class="mb-4 mx-auto d-block">
+        <h5 class="fw-bold mb-4">Acceso DUNAS</h5>
+        <div class="mb-3 text-start">
+            <input type="text" id="userInput" class="form-control text-center rounded-3" placeholder="Usuario">
         </div>
+        <div class="mb-4 text-start">
+            <input type="password" id="passInput" class="form-control text-center rounded-3" placeholder="Contraseña">
+        </div>
+        <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill" id="btnLogin" onclick="checkAccess()">
+            ENTRAR
+        </button>
+    </div>
+</div>
+
+<div class="wrapper d-none" id="main-app">
     </div>
 
     <!-- APLICACIÓN PRINCIPAL -->
