@@ -34,7 +34,11 @@ function renderSelectors() {
 // Función para generar la nota y guardar en Supabase
 async function guardarNota() {
     const clienteId = document.getElementById('selCliente').value;
-    if (!clienteId) return alert("Selecciona un cliente");
+    if (!clienteId) return alert("Por favor, selecciona un cliente");
+
+    // Validar que haya al menos un producto
+    const filas = document.querySelectorAll('.item-row');
+    if (filas.length === 0) return alert("Agrega al menos un producto");
 
     const btn = document.querySelector('.btn-primary');
     btn.disabled = true;
@@ -44,44 +48,72 @@ async function guardarNota() {
         // 1. Crear la Nota (Cabecera)
         const notaData = {
             cliente_id: clienteId,
-            fecha: new Date().toISOString(),
-            total: calcularTotal()
+            total: calcularTotal(),
+            // No enviamos fecha si en Supabase tiene default: now()
         };
 
         const resNota = await fetch(`${SB_URL}/notas`, {
             method: 'POST',
-            headers,
+            headers: {
+                ...headers,
+                "Prefer": "return=representation" // OBLIGATORIO para recibir el ID de vuelta
+            },
             body: JSON.stringify(notaData)
         });
-        const [nuevaNota] = await resNota.json();
 
-        // 2. Crear los detalles
+        if (!resNota.ok) {
+            const errorText = await resNota.text();
+            throw new Error(`Error en Nota: ${errorText}`);
+        }
+
+        const datosNota = await resNota.json();
+        const nuevaNota = datosNota[0]; // Supabase devuelve un array con el objeto creado
+
+        // 2. Preparar los detalles
         const detalles = [];
-        document.querySelectorAll('.item-row').forEach(row => {
-            detalles.push({
-                nota_id: nuevaNota.id,
-                modelo_id: row.querySelector('.sel-modelo').value,
-                descripcion: row.querySelector('.in-desc').value,
-                cantidad: parseInt(row.querySelector('.in-cant').value),
-                precio: parseFloat(row.querySelector('.in-precio').value),
-                total: parseInt(row.querySelector('.in-cant').value) * parseFloat(row.querySelector('.in-precio').value)
+        filas.forEach(row => {
+            const mId = row.querySelector('.sel-modelo').value;
+            const cant = parseInt(row.querySelector('.in-cant').value) || 0;
+            const prec = parseFloat(row.querySelector('.in-precio').value) || 0;
+
+            if (mId && cant > 0) {
+                detalles.push({
+                    nota_id: nuevaNota.id, // El ID que acabamos de obtener
+                    modelo_id: mId,
+                    descripcion: row.querySelector('.in-desc').value,
+                    cantidad: cant,
+                    precio: prec,
+                    total: cant * prec
+                });
+            }
+        });
+
+        // 3. Guardar los detalles
+        if (detalles.length > 0) {
+            const resDetalle = await fetch(`${SB_URL}/detalle_notas`, {
+                method: 'POST',
+                headers: {
+                    ...headers,
+                    "Prefer": "return=representation"
+                },
+                body: JSON.stringify(detalles)
             });
-        });
 
-        await fetch(`${SB_URL}/detalle_notas`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(detalles)
-        });
+            if (!resDetalle.ok) {
+                const errorDet = await resDetalle.text();
+                throw new Error(`Error en Detalles: ${errorDet}`);
+            }
+        }
 
-        alert("Nota guardada en Supabase con éxito");
+        alert("Nota y detalles guardados correctamente");
         location.reload();
 
     } catch (error) {
-        console.error(error);
-        alert("Error al guardar");
+        console.error("Error completo:", error);
+        alert("No se pudo guardar: " + error.message);
     } finally {
         btn.disabled = false;
+        btn.innerText = "GENERAR Y GUARDAR";
     }
 }
 
