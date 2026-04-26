@@ -8,6 +8,37 @@ const headers = {
     "Prefer": "return=representation"
 };
 
+// ... al inicio del archivo ...
+
+document.getElementById('sidebarCollapse').addEventListener('click', function() {
+    document.getElementById('sidebar').classList.toggle('active');
+});
+
+function showSection(section) {
+    // Ocultar todas las secciones
+    document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
+    document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
+    
+    // Mostrar la seleccionada
+    document.getElementById('sec-' + section).classList.remove('d-none');
+    
+    // Cambiar título y estilo del menú
+    const titulos = {
+        'notas': 'Crear Nota',
+        'historial': 'Historial de Ventas',
+        'clientes': 'Administrar Clientes',
+        'modelos': 'Administrar Modelos'
+    };
+    document.getElementById('sectionTitle').innerText = titulos[section];
+    
+    // Si estás en móvil, al hacer clic podrías querer cerrar el sidebar
+    if (window.innerWidth < 768) {
+        document.getElementById('sidebar').classList.add('active');
+    }
+}
+
+// ... mantén tus funciones de fetchClientes, fetchModelos y guardarNota iguales ...
+
 let appData = {
     clientes: [],
     modelos: []
