@@ -179,8 +179,8 @@ function abrirModalCliente(id = null) {
     if(id) {
         const c = appData.clientes.find(cli => cli.id === id);
         document.getElementById('cliNombre').value = c.nombre;
-        document.getElementById('cliCiudad').value = c.ciudad || '';
-        document.getElementById('cliTel').value = c.telefono || '';
+        document.getElementById('cliCiudad').value = c.destino || ''; // Mapea destino al input
+        document.getElementById('cliTel').value = c.tel || '';        // Mapea tel al input
         document.getElementById('modalClienteTitulo').innerText = 'Editar Cliente';
     } else {
         document.getElementById('cliNombre').value = '';
@@ -195,8 +195,8 @@ async function guardarCliente() {
     const id = document.getElementById('editClienteId').value;
     const data = {
         nombre: document.getElementById('cliNombre').value,
-        ciudad: document.getElementById('cliCiudad').value,
-        telefono: document.getElementById('cliTel').value
+        destino: document.getElementById('cliCiudad').value, // Se guarda como 'destino'
+        tel: document.getElementById('cliTel').value        // Se guarda como 'tel'
     };
 
     const url = id ? `${SB_URL}/clientes?id=eq.${id}` : `${SB_URL}/clientes`;
@@ -252,18 +252,18 @@ function renderSelectors() {
 }
 
 function renderTablas() {
-    const tbodyCli = document.getElementById('tablaClientesBody');
-    tbodyCli.innerHTML = appData.clientes.map(c => `
-        <tr>
-            <td class="px-4 fw-bold">${c.nombre}</td>
-            <td class="text-muted small">${c.ciudad || '-'}</td>
-            <td class="text-end px-4">
-                <button class="btn btn-sm btn-light rounded-pill" onclick="abrirModalCliente('${c.id}')">
-                    <i class="bi bi-pencil-square"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    // ... dentro de renderTablas ...
+const tbodyCli = document.getElementById('tablaClientesBody');
+tbodyCli.innerHTML = appData.clientes.map(c => `
+    <tr>
+        <td class="px-4 fw-bold">${c.nombre}</td>
+        <td class="text-muted small">${c.destino || '-'}</td> <td class="text-muted small">${c.tel || '-'}</td>     <td class="text-end px-4">
+            <button class="btn btn-sm btn-light rounded-pill" onclick="abrirModalCliente('${c.id}')">
+                <i class="bi bi-pencil-square"></i>
+            </button>
+        </td>
+    </tr>
+`).join('');
 
     const tbodyMod = document.getElementById('tablaModelosBody');
     tbodyMod.innerHTML = appData.modelos.map(m => `
