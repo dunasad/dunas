@@ -2,39 +2,100 @@ body { font-family: 'Poppins', sans-serif; background: #f4f7f6; }
 
 .wrapper { display: flex; width: 100%; align-items: stretch; }
 
-/* SIDEBAR STYLES */
+/* ====== NUEVO ESTILO DEL SIDEBAR (GRIS CLARO) ====== */
 #sidebar {
     min-width: 250px;
     max-width: 250px;
-    background: #1a1a1a;
-    color: #fff;
+    background: #f8f9fa; /* Gris muy claro (Bootstrap light) */
+    color: #333; /* Texto oscuro para contraste */
     transition: all 0.3s;
     min-height: 100vh;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05); /* Sombra suave a la derecha */
 }
 
-#sidebar.active { min-width: 80px; max-width: 80px; text-align: center; }
+#sidebar.active {
+    min-width: 80px;
+    max-width: 80px;
+    text-align: center;
+}
 
-#sidebar .sidebar-header { padding: 20px; background: #111; text-align: center; }
+/* Cabecera del Sidebar */
+#sidebar .sidebar-header {
+    padding: 20px;
+    background: #e9ecef; /* Gris un poco más oscuro para la cabecera */
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-.logo-img { width: 40px; border-radius: 50%; }
-#sidebar.active .logo-text { display: none; }
+/* Logo y Texto en cabecera */
+.logo-img {
+    height: 30px; /* Ajusta según tu logo real */
+    margin-right: 10px;
+}
 
+.logo-text {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+/* Ocultar texto del logo al contraer */
+#sidebar.active .logo-text {
+    display: none;
+}
+#sidebar.active .logo-img {
+    margin-right: 0;
+}
+/* Estilos de los enlaces del menú */
 #sidebar ul li a {
-    padding: 15px 20px;
-    display: block;
-    color: #adb5bd;
+    padding: 15px 25px;
+    display: flex;
+    align-items: center;
+    color: #495057; /* Gris oscuro para el texto */
     text-decoration: none;
-    border-left: 3px solid transparent;
+    transition: all 0.2s;
+    font-weight: 500;
+    border-left: 4px solid transparent; /* Borde para el estado activo */
 }
 
-#sidebar ul li a i { font-size: 1.2rem; margin-right: 10px; }
-#sidebar.active ul li a i { margin-right: 0; }
-#sidebar.active ul li a span { display: none; }
+/* Iconos */
+#sidebar ul li a i {
+    font-size: 1.3rem;
+    margin-right: 15px;
+    color: #6c757d; /* Color gris para iconos no activos */
+}
+/* Ajuste de iconos al contraer */
+#sidebar.active ul li a {
+    justify-content: center;
+    padding: 15px;
+}
+#sidebar.active ul li a i {
+    margin-right: 0;
+    font-size: 1.5rem;
+}
+/* Ocultar texto del menú al contraer */
+#sidebar.active ul li a span {
+    display: none;
+}
 
-#sidebar ul li a:hover, #sidebar ul li.active a {
+/* Estado Hover y Activo (Parecido a tu captura image_6.png) */
+#sidebar ul li a:hover {
+    background: #e9ecef;
+    color: #000;
+}
+
+#sidebar ul li.active a {
     color: #fff;
-    background: #252525;
-    border-left: 3px solid #0d6efd;
+    background: #0d6efd; /* Azul Bootstrap para el ítem activo */
+    border-left-color: #0a58ca; /* Borde azul más oscuro */
+}
+
+/* Cambiar color de icono en estado activo */
+#sidebar ul li.active a i {
+    color: #fff;
 }
 
 /* CONTENT STYLES */
