@@ -8,16 +8,6 @@ const headers = {
     "Prefer": "return=representation"
 };
 
-// Configuración de Supabase
-const SB_URL = "https://coywogyelfaspxlsctjv.supabase.co/rest/v1";
-const SB_KEY = "TU_ANON_KEY_AQUI"; // Reemplázala con tu llave real
-const headers = {
-    "apikey": SB_KEY,
-    "Authorization": `Bearer ${SB_KEY}`,
-    "Content-Type": "application/json",
-    "Prefer": "return=representation"
-};
-
 let appData = {
     clientes: [],
     modelos: [],
