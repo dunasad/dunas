@@ -1,93 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Notas</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUNAS STUDIO - Supabase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container mt-4">
+        <header class="text-center mb-4">
+            <h2 class="fw-bold text-primary">DUNAS STUDIO</h2>
+        </header>
 
-<div class="app">
+        <div class="card shadow-sm border-0 p-4">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Cliente</label>
+                <select id="selCliente" class="form-select"></select>
+            </div>
 
-  <div id="sidebar" class="sidebar">
-    <img src="logo.png" class="logo">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Trabajo</label>
+                <input type="text" id="trabajoDesc" class="form-control" value="Fabricación de palas tejidas">
+            </div>
 
-    <button onclick="mostrarSeccion('notas')">Notas</button>
-    <button onclick="mostrarSeccion('historial')">Historial</button>
+            <hr>
+            <div id="itemsContainer">
+                </div>
+            
+            <button class="btn btn-outline-secondary btn-sm mb-4" onclick="addItem()">+ Agregar Concepto</button>
 
-    <p>Altas</p>
-    <button onclick="mostrarSeccion('clientes')">Clientes</button>
-    <button onclick="mostrarSeccion('modelos')">Modelos</button>
-  </div>
-
-  <div class="contenido">
-
-    <button class="menu" onclick="toggleSidebar()">☰</button>
-
-    <!-- NOTAS -->
-    <div id="notas" class="seccion">
-  <h2>Crear Nota</h2>
-
-  <div class="form-grid">
-
-    <div>
-      <label>Cliente</label>
-      <select id="clienteSelect"></select>
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="text-danger fw-bold">Total: $<span id="totalTxt">0.00</span></h4>
+                <button class="btn btn-primary px-5 py-3 fw-bold" onclick="guardarNota()">GENERAR Y GUARDAR</button>
+            </div>
+        </div>
     </div>
 
-    <div>
-      <label>Fecha</label>
-      <input id="fecha" type="date">
-    </div>
-
-  </div>
-
-  <hr>
-
-  <h3>Productos</h3>
-
-  <div id="productos"></div>
-
-  <button class="btn" onclick="agregarProducto()">+ Agregar producto</button>
-
-  <h3>Total: $<span id="total">0</span></h3>
-
-  <button class="btn" onclick="guardarNota()">Guardar Nota</button>
-</div>
-
-    <!-- HISTORIAL -->
-    <div id="historial" class="seccion" style="display:none;">
-      <h2>Historial</h2>
-      <button onclick="cargarNotas()">Cargar</button>
-      <div id="listaNotas"></div>
-    </div>
-
-    <!-- CLIENTES -->
-    <div id="clientes" class="seccion" style="display:none;">
-      <h2>Clientes</h2>
-
-      <input id="nombreCliente" placeholder="Nombre">
-      <input id="ciudadCliente" placeholder="Ciudad">
-      <input id="telCliente" placeholder="Teléfono">
-
-      <button onclick="guardarCliente()">Guardar</button>
-
-      <div id="listaClientes"></div>
-    </div>
-
-    <!-- MODELOS -->
-    <div id="modelos" class="seccion" style="display:none;">
-      <h2>Modelos</h2>
-
-      <input id="nombreModelo" placeholder="Nombre del modelo">
-      <button onclick="guardarModelo()">Guardar</button>
-
-      <div id="listaModelos"></div>
-    </div>
-
-  </div>
-
-</div>
-
-<script type="module" src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
