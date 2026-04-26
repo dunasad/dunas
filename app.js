@@ -17,6 +17,43 @@ window.addEventListener('DOMContentLoaded', () => {
     init();
 });
 
+async function checkAccess() {
+    const user = document.getElementById('userInput').value;
+    const pass = document.getElementById('passInput').value;
+    const btn = document.getElementById('btnLogin');
+
+    if (!user || !pass) return alert("Completa los campos");
+
+    btn.disabled = true;
+    btn.innerText = "Verificando...";
+
+    try {
+        // Consultamos si existe un usuario con esas credenciales
+        const res = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { headers });
+        const data = await res.json();
+
+        if (data.length > 0) {
+            // Guardamos el nombre en una variable o localStorage si quieres que la sesión persista
+            const nombreUsuario = data[0].nombre;
+            
+            document.getElementById('login-screen').remove();
+            document.getElementById('main-app').classList.remove('d-none');
+            
+            notify(`Bienvenido, ${nombreUsuario}`, "bg-success");
+            init(); // Arrancamos la carga de la app
+        } else {
+            alert("Usuario o contraseña incorrectos");
+            btn.disabled = false;
+            btn.innerText = "ENTRAR";
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Error de conexión");
+        btn.disabled = false;
+        btn.innerText = "ENTRAR";
+    }
+}
+
 async function init() {
     try {
         // Inicializar instancias de modales
