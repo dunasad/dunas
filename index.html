@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUNAS STUDIO - Sistema de Control</title>
+    <title>DUNAS - Sistema de Notas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -14,33 +14,21 @@
     <div class="wrapper">
         <nav id="sidebar">
             <div class="sidebar-header">
-    <img src="logo.png" alt="" class="logo-img">
-</div>
+                <img src="logo.png" alt="" class="logo-img">
+            </div>
 
             <ul class="list-unstyled components">
                 <li id="menu-notas" class="active" onclick="showSection('notas')">
-                    <a href="#">
-                        <i class="bi bi-file-earmark-plus"></i> 
-                        <span>Notas</span>
-                    </a>
+                    <a href="#"><i class="bi bi-file-earmark-plus"></i> <span>Notas</span></a>
                 </li>
                 <li id="menu-historial" onclick="showSection('historial')">
-                    <a href="#">
-                        <i class="bi bi-clock-history"></i> 
-                        <span>Historial</span>
-                    </a>
+                    <a href="#"><i class="bi bi-clock-history"></i> <span>Historial</span></a>
                 </li>
                 <li id="menu-clientes" onclick="showSection('clientes')">
-                    <a href="#">
-                        <i class="bi bi-people"></i> 
-                        <span>Clientes</span>
-                    </a>
+                    <a href="#"><i class="bi bi-people"></i> <span>Clientes</span></a>
                 </li>
                 <li id="menu-modelos" onclick="showSection('modelos')">
-                    <a href="#">
-                        <i class="bi bi-box-seam"></i> 
-                        <span>Modelos</span>
-                    </a>
+                    <a href="#"><i class="bi bi-box-seam"></i> <span>Modelos</span></a>
                 </li>
             </ul>
         </nav>
@@ -56,24 +44,16 @@
             </nav>
 
             <div class="container-fluid px-4">
-                
                 <div id="sec-notas" class="app-section">
                     <div class="card shadow-sm border-0 p-4 rounded-4">
                         <div class="mb-4">
                             <label class="form-label fw-bold text-muted small uppercase">Seleccionar Cliente</label>
                             <select id="selCliente" class="form-select border-0 bg-light py-2 px-3"></select>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small uppercase">Detalle del Pedido</label>
-                            <div id="itemsContainer">
-                                </div>
-                        </div>
-
+                        <div id="itemsContainer"></div>
                         <button class="btn btn-outline-primary btn-sm w-100 rounded-3 mb-4 py-2 border-dashed" onclick="addItem()">
                             <i class="bi bi-plus-circle me-1"></i> Agregar Concepto
                         </button>
-
                         <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-4">
                             <div>
                                 <span class="text-muted small d-block">Monto Total</span>
@@ -86,151 +66,127 @@
                     </div>
                 </div>
 
-                <div id="sec-historial" class="app-section d-none">
-                    <div class="card shadow-sm border-0 rounded-4 p-4">
+                <div id="sec-clientes" class="app-section d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold mb-0">Clientes</h4>
+                        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalCliente()">
+                            <i class="bi bi-plus-lg"></i> Nuevo Cliente
+                        </button>
+                    </div>
+                    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
                                     <tr>
-                                        <th class="border-0">Folio</th>
-                                        <th class="border-0">Fecha</th>
-                                        <th class="border-0">Cliente</th>
-                                        <th class="border-0 text-end">Total</th>
-                                        <th class="border-0 text-center">Acciones</th>
+                                        <th class="border-0 px-4">Nombre</th>
+                                        <th class="border-0">Destino</th>
+                                        <th class="border-0">Teléfono</th>
+                                        <th class="border-0 text-end px-4">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody id="listaHistorial">
-                                    </tbody>
+                                <tbody id="tablaClientesBody"></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <div id="sec-clientes" class="app-section d-none">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold mb-0">Clientes</h4>
-        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalCliente()">
-            <i class="bi bi-plus-lg"></i> Nuevo Cliente
-        </button>
-    </div>
-    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-    <tr>
-        <th class="border-0 px-4">Nombre</th>
-        <th class="border-0">Destino</th> <th class="border-0">Teléfono</th> <th class="border-0 text-end px-4">Acciones</th>
-    </tr>
-</thead>
-                <tbody id="tablaClientesBody">
-                    </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div id="sec-modelos" class="app-section d-none">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold mb-0">Modelos</h4>
-        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalModelo()">
-            <i class="bi bi-plus-lg"></i> Nuevo Modelo
-        </button>
-    </div>
-    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="border-0 px-4">Nombre del Modelo</th>
-                        <th class="border-0 text-end px-4">Acciones</th>
-                    </tr>
-                </thead>
-                
-                <tbody id="tablaModelosBody">
-                    </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalCliente" tabindex="-1" aria-modal="true" data-bs-focus="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4 shadow">
-            <div class="modal-header border-0 px-4 pt-4">
-                <h5 class="fw-bold" id="modalClienteTitulo">Nuevo Cliente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body px-4 pb-4">
-                <input type="hidden" id="editClienteId">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">NOMBRE COMPLETO</label>
-                    <input type="text" id="cliNombre" class="form-control bg-light border-0 py-2">
+                <div id="sec-modelos" class="app-section d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold mb-0">Modelos</h4>
+                        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalModelo()">
+                            <i class="bi bi-plus-lg"></i> Nuevo Modelo
+                        </button>
+                    </div>
+                    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="border-0 px-4">Nombre del Modelo</th>
+                                        <th class="border-0 text-end px-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaModelosBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">CIUDAD / DESTINO</label>
-                    <input type="text" id="cliCiudad" class="form-control bg-light border-0 py-2">
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCliente" tabindex="-1" aria-hidden="true" data-bs-focus="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0 px-4 pt-4">
+                    <h5 class="fw-bold" id="modalClienteTitulo">Nuevo Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">TELÉFONO</label>
-                    <input type="tel" id="cliTel" class="form-control bg-light border-0 py-2">
+                <div class="modal-body px-4 pb-4">
+                    <input type="hidden" id="editClienteId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">NOMBRE COMPLETO</label>
+                        <input type="text" id="cliNombre" class="form-control bg-light border-0 py-2">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">CIUDAD / DESTINO</label>
+                        <input type="text" id="cliCiudad" class="form-control bg-light border-0 py-2">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">TELÉFONO</label>
+                        <input type="tel" id="cliTel" class="form-control bg-light border-0 py-2">
+                    </div>
+                    <button class="btn btn-primary w-100 py-2 fw-bold rounded-3" onclick="guardarCliente()">GUARDAR CLIENTE</button>
                 </div>
-                <button class="btn btn-primary w-100 py-2 fw-bold rounded-3" onclick="guardarCliente()">GUARDAR CLIENTE</button>
             </div>
         </div>
     </div>
-</div>
 
-<div class="modal fade" id="modalModelo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4 shadow">
-            <div class="modal-header border-0 px-4 pt-4">
-                <h5 class="fw-bold" id="modalModeloTitulo">Nuevo Modelo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body px-4 pb-4">
-                <input type="hidden" id="editModeloId">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">NOMBRE DEL MODELO</label>
-                    <input type="text" id="modNombre" class="form-control bg-light border-0 py-2" placeholder="Ej: Under V2">
+    <div class="modal fade" id="modalModelo" tabindex="-1" aria-hidden="true" data-bs-focus="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0 px-4 pt-4">
+                    <h5 class="fw-bold" id="modalModeloTitulo">Nuevo Modelo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <button class="btn btn-primary w-100 py-2 fw-bold rounded-3" onclick="guardarModelo()">GUARDAR MODELO</button>
+                <div class="modal-body px-4 pb-4">
+                    <input type="hidden" id="editModeloId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">NOMBRE DEL MODELO</label>
+                        <input type="text" id="modNombre" class="form-control bg-light border-0 py-2">
+                    </div>
+                    <button class="btn btn-primary w-100 py-2 fw-bold rounded-3" onclick="guardarModelo()">GUARDAR MODELO</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="liveToast" class="toast align-items-center text-white bg-dark border-0 rounded-3 shadow" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="toastMsg"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-            </div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
 
     <div class="modal fade" id="modalConfirmar" tabindex="-1" aria-hidden="true" data-bs-focus="false">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4 shadow">
-            <div class="modal-body text-center p-4">
-                <i class="bi bi-exclamation-triangle text-warning display-4 mb-3"></i>
-                <h5 class="fw-bold">¿Eliminar registro?</h5>
-                <p class="text-muted small mb-4" id="confirmMsgText">Esta acción no se puede deshacer.</p>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-light w-100 rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger w-100 rounded-3" id="btnConfirmarEliminar">Eliminar</button>
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-body text-center p-4">
+                    <i class="bi bi-exclamation-triangle text-warning display-4 mb-3"></i>
+                    <h5 class="fw-bold">¿Seguro?</h5>
+                    <p class="text-muted small mb-4" id="confirmMsgText">Esta acción no se puede deshacer.</p>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light w-100 rounded-3" data-bs-dismiss="modal">No</button>
+                        <button type="button" class="btn btn-danger w-100 rounded-3" id="btnConfirmarEliminar">Sí, eliminar</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-    
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast align-items-center text-white bg-dark border-0 rounded-3" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMsg"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
