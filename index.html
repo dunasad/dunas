@@ -107,8 +107,9 @@
     <div class="modal fade" id="modalCliente" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4">
-                <div class="modal-header border-0 pb-0"><h5 class="fw-bold">Nuevo Cliente</h5></div>
+                <div class="modal-header border-0 pb-0"><h5 class="fw-bold" id="modalClienteTitulo">Nuevo Cliente</h5></div>
                 <div class="modal-body">
+                    <input type="hidden" id="editCliId">
                     <input type="text" id="nomCli" class="form-control mb-3" placeholder="Nombre Completo">
                     <input type="text" id="telCli" class="form-control" placeholder="Teléfono">
                 </div>
@@ -123,8 +124,9 @@
     <div class="modal fade" id="modalModelo" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4">
-                <div class="modal-header border-0 pb-0"><h5 class="fw-bold">Nuevo Modelo</h5></div>
+                <div class="modal-header border-0 pb-0"><h5 class="fw-bold" id="modalModeloTitulo">Nuevo Modelo</h5></div>
                 <div class="modal-body">
+                    <input type="hidden" id="editModId">
                     <input type="text" id="nomMod" class="form-control" placeholder="Nombre del Modelo">
                 </div>
                 <div class="modal-footer border-0">
