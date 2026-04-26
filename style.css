@@ -21,18 +21,19 @@ body { font-family: 'Poppins', sans-serif; background: #f4f7f6; }
 
 /* Cabecera del Sidebar */
 #sidebar .sidebar-header {
-    padding: 20px;
-    background: #e9ecef; /* Gris un poco más oscuro para la cabecera */
-    border-bottom: 1px solid #dee2e6;
+    padding: 25px 15px; /* Un poco más de espacio arriba y abajo */
+    background: #f8f9fa; 
     display: flex;
+    justify-content: center; /* Centra el logo horizontalmente */
     align-items: center;
-    justify-content: center;
+    border-bottom: 1px solid #dee2e6;
 }
 
 /* Logo y Texto en cabecera */
 .logo-img {
-    height: 30px; /* Ajusta según tu logo real */
-    margin-right: 10px;
+    height: 50px; /* Un poco más grande ahora que no hay texto */
+    width: auto;
+    object-fit: contain;
 }
 
 .logo-text {
