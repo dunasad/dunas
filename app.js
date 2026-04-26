@@ -38,9 +38,10 @@ window.showSection = (section) => {
     if(section === 'historial') fetchHistorial();
 };
 
-// --- GESTIÓN DE CLIENTES (CREAR / EDITAR) ---
+// --- GESTIÓN DE CLIENTES ---
 window.abrirModalCliente = (id = null) => {
-    const modal = new bootstrap.Modal('#modalCliente');
+    const modalEl = document.getElementById('modalCliente');
+    const modal = new bootstrap.Modal(modalEl);
     if (id) {
         const c = appData.clientes.find(cli => cli.id == id);
         document.getElementById('modalClienteTitulo').innerText = "Editar Cliente";
@@ -60,21 +61,24 @@ window.guardarCliente = async () => {
     const id = document.getElementById('editCliId').value;
     const nombre = document.getElementById('nomCli').value;
     const telefono = document.getElementById('telCli').value;
-    const body = JSON.stringify({ nombre, telefono });
     
+    document.activeElement.blur(); // Quitar foco para evitar error aria-hidden
+
+    const body = JSON.stringify({ nombre, telefono });
     const url = id ? `${SB_URL}/clientes?id=eq.${id}` : `${SB_URL}/clientes`;
     const method = id ? 'PATCH' : 'POST';
 
     await fetch(url, { method, headers, body });
-    bootstrap.Modal.getInstance('#modalCliente').hide();
+    bootstrap.Modal.getInstance(document.getElementById('modalCliente')).hide();
     await fetchClientes();
     renderTablas();
     renderSelectors();
 };
 
-// --- GESTIÓN DE MODELOS (CREAR / EDITAR) ---
+// --- GESTIÓN DE MODELOS ---
 window.abrirModalModelo = (id = null) => {
-    const modal = new bootstrap.Modal('#modalModelo');
+    const modalEl = document.getElementById('modalModelo');
+    const modal = new bootstrap.Modal(modalEl);
     if (id) {
         const m = appData.modelos.find(mod => mod.id == id);
         document.getElementById('modalModeloTitulo').innerText = "Editar Modelo";
@@ -91,13 +95,15 @@ window.abrirModalModelo = (id = null) => {
 window.guardarModelo = async () => {
     const id = document.getElementById('editModId').value;
     const nombre = document.getElementById('nomMod').value;
-    const body = JSON.stringify({ nombre });
     
+    document.activeElement.blur(); // Quitar foco
+
+    const body = JSON.stringify({ nombre });
     const url = id ? `${SB_URL}/modelos?id=eq.${id}` : `${SB_URL}/modelos`;
     const method = id ? 'PATCH' : 'POST';
 
     await fetch(url, { method, headers, body });
-    bootstrap.Modal.getInstance('#modalModelo').hide();
+    bootstrap.Modal.getInstance(document.getElementById('modalModelo')).hide();
     await fetchModelos();
     renderTablas();
 };
@@ -108,23 +114,18 @@ function renderTablas() {
     const tbodyMod = document.getElementById('tablaModelosBody');
     
     tbodyCli.innerHTML = appData.clientes.map(c => `
-        <tr>
-            <td class="px-4">${c.nombre}</td>
-            <td>${c.telefono || ''}</td>
-            <td class="text-end px-4">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalCliente('${c.id}')"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('clientes','${c.id}')"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`).join('');
+        <tr><td class="px-4">${c.nombre}</td><td>${c.telefono || ''}</td>
+        <td class="text-end px-4">
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalCliente('${c.id}')"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('clientes','${c.id}')"><i class="bi bi-trash"></i></button>
+        </td></tr>`).join('');
 
     tbodyMod.innerHTML = appData.modelos.map(m => `
-        <tr>
-            <td class="px-4">${m.nombre}</td>
-            <td class="text-end px-4">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalModelo('${m.id}')"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('modelos','${m.id}')"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`).join('');
+        <tr><td class="px-4">${m.nombre}</td>
+        <td class="text-end px-4">
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirModalModelo('${m.id}')"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('modelos','${m.id}')"><i class="bi bi-trash"></i></button>
+        </td></tr>`).join('');
 }
 
 window.eliminarRegistro = async (tabla, id) => {
@@ -141,15 +142,12 @@ async function fetchHistorial() {
     const res = await fetch(`${SB_URL}/notas?select=*,clientes(nombre)&order=created_at.desc`, { headers });
     const notas = await res.json();
     tbody.innerHTML = notas.map(n => `
-        <tr>
-            <td class="px-4 small">${new Date(n.created_at).toLocaleDateString()}</td>
-            <td class="fw-bold">${n.clientes ? n.clientes.nombre : 'S/N'}</td>
-            <td class="text-primary fw-bold">$${n.total.toFixed(2)}</td>
-            <td class="text-end px-4">
-                <button class="btn btn-sm btn-light border me-1"><i class="bi bi-printer"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`).join('');
+        <tr><td class="px-4 small">${new Date(n.created_at).toLocaleDateString()}</td><td class="fw-bold">${n.clientes ? n.clientes.nombre : 'S/N'}</td>
+        <td class="text-primary fw-bold">$${n.total.toFixed(2)}</td>
+        <td class="text-end px-4">
+            <button class="btn btn-sm btn-light border me-1"><i class="bi bi-printer"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')"><i class="bi bi-trash"></i></button>
+        </td></tr>`).join('');
 }
 
 window.eliminarNota = async (id) => {
@@ -164,24 +162,36 @@ window.guardarNota = async () => {
     const total = parseFloat(document.getElementById('totalTxt').innerText);
     if(!clienteId || total <= 0) return alert("Selecciona un cliente y agrega productos");
 
-    const resNota = await fetch(`${SB_URL}/notas`, { 
-        method: 'POST', 
-        headers: { ...headers, "Prefer": "return=representation" }, 
-        body: JSON.stringify({ cliente_id: clienteId, total: total }) 
-    });
-    const dataNota = await resNota.json();
-    const notaId = dataNota[0].id;
+    try {
+        const resNota = await fetch(`${SB_URL}/notas`, { 
+            method: 'POST', 
+            headers: { ...headers, "Prefer": "return=representation" }, 
+            body: JSON.stringify({ cliente_id: clienteId, total: total }) 
+        });
+        const dataNota = await resNota.json();
+        const notaId = dataNota[0].id;
 
-    const detalles = Array.from(document.querySelectorAll('.item-row')).map(row => ({
-        nota_id: notaId,
-        modelo: row.querySelector('.select-modelo').value,
-        cantidad: parseInt(row.querySelector('.input-cant').value),
-        precio: parseFloat(row.querySelector('.input-precio').value)
-    }));
+        const detalles = Array.from(document.querySelectorAll('.item-row')).map(row => ({
+            nota_id: notaId,
+            modelo: row.querySelector('.select-modelo').value,
+            cantidad: parseInt(row.querySelector('.input-cant').value),
+            precio: parseFloat(row.querySelector('.input-precio').value)
+        }));
 
-    await fetch(`${SB_URL}/detalle_notas`, { method: 'POST', headers, body: JSON.stringify(detalles) });
-    alert("¡Nota guardada con éxito!");
-    location.reload();
+        await fetch(`${SB_URL}/detalle_notas`, { method: 'POST', headers, body: JSON.stringify(detalles) });
+        
+        alert("¡Nota guardada con éxito!");
+        
+        // CORRECCIÓN: En lugar de reload(), limpiamos el formulario
+        document.getElementById('itemsContainer').innerHTML = "";
+        document.getElementById('selCliente').value = "";
+        document.getElementById('totalTxt').innerText = "0.00";
+        addItem(); 
+
+    } catch (e) {
+        console.error(e);
+        alert("Error al guardar la nota");
+    }
 };
 
 window.addItem = () => {
