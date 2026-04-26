@@ -90,22 +90,20 @@ async function fetchModelos() {
 }
 
 // 4. FUNCIONES DE UI
-ffunction showSection(section) {
-    // Ocultar todas las secciones
+function showSection(section) {
+    // 1. Ocultar todas las secciones
     document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
     
-    // Quitar "active" de los menús (con validación de existencia)
-    document.querySelectorAll('#sidebar li').forEach(li => {
-        if (li) li.classList.remove('active');
-    });
+    // 2. Limpiar estados activos del menú
+    document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
 
-    // Mostrar la sección seleccionada
-    const targetSection = document.getElementById('sec-' + section);
-    const targetMenu = document.getElementById('menu-' + section);
+    // 3. Mostrar la sección destino
+    const sec = document.getElementById('sec-' + section);
+    const menu = document.getElementById('menu-' + section);
 
-    if (targetSection) targetSection.classList.remove('d-none');
-    if (targetMenu) targetMenu.classList.add('active');
-    
+    if (sec) sec.classList.remove('d-none');
+    if (menu) menu.classList.add('active'); // Aquí es donde fallaba si el ID no existía
+
     const titulos = { 'notas': 'Crear Nota', 'historial': 'Historial', 'clientes': 'Clientes', 'modelos': 'Modelos' };
     const titleEl = document.getElementById('sectionTitle');
     if (titleEl) titleEl.innerText = titulos[section] || 'Panel';
@@ -285,8 +283,51 @@ window.calcularTotal = () => {
     document.getElementById('totalTxt').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
 };
 
-window.guardarNota = () => {
+window.guardarNota = async () => {
     const clienteId = document.getElementById('selCliente').value;
-    if(!clienteId) return alert("Selecciona un cliente");
-    notify("Nota guardada (Simulación)", "bg-success");
+    const total = parseFloat(document.getElementById('totalTxt').innerText.replace(/,/g, '')) || 0;
+    
+    // Recolectar los conceptos (items)
+    const items = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+        items.push({
+            modelo: row.querySelector('.select-modelo').value,
+            cantidad: row.querySelector('.input-cant').value,
+            precio: row.querySelector('.input-precio').value
+        });
+    });
+
+    if (!clienteId || items.length === 0) {
+        return alert("Por favor, selecciona un cliente y agrega al menos un concepto.");
+    }
+
+    try {
+        const cuerpoNota = {
+            cliente_id: clienteId,
+            items: JSON.stringify(items), // Guardamos como texto JSON
+            total: total,
+            fecha: new Date().toISOString()
+        };
+
+        const res = await fetch(`${SB_URL}/notas`, {
+            method: 'POST',
+            headers: headers, // Usa los headers que ya tenemos definidos arriba
+            body: JSON.stringify(cuerpoNota)
+        });
+
+        if (res.ok) {
+            notify("¡Nota guardada en Supabase!", "bg-success");
+            // Limpiar el formulario
+            document.getElementById('itemsContainer').innerHTML = "";
+            document.getElementById('selCliente').value = "";
+            addItem(); // Agregar una fila vacía nueva
+        } else {
+            const errorData = await res.json();
+            console.error("Error de Supabase:", errorData);
+            alert("Error al guardar: " + (errorData.message || "Revisa la consola"));
+        }
+    } catch (error) {
+        console.error("Error de red:", error);
+        alert("No se pudo conectar con Supabase");
+    }
 };
