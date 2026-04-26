@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DUNAS STUDIO - Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -21,6 +22,8 @@
         #content { width: 100%; min-height: 100vh; }
         .app-section { padding: 20px; }
         .d-none { display: none !important; }
+        /* Estilo personalizado para SweetAlert */
+        .swal2-popup { font-family: 'Poppins', sans-serif; border-radius: 1.5rem !important; }
     </style>
 </head>
 <body>
@@ -60,8 +63,8 @@
                         <div id="itemsContainer"></div>
                         <button class="btn btn-outline-primary btn-sm w-100 mb-4 py-2 border-dashed" onclick="addItem()">+ Agregar Concepto</button>
                         <div class="d-flex justify-content-between align-items-center border-top pt-4">
-                            <div><span class="text-muted small">Total</span><h3 class="fw-bold mb-0 text-primary">$<span id="totalTxt">0.00</span></h3></div>
-                            <button class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm" onclick="guardarNota()">GUARDAR NOTA</button>
+                            <div><span class="text-muted small">Monto Total</span><h3 class="fw-bold mb-0 text-primary">$<span id="totalTxt">0.00</span></h3></div>
+                            <button class="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-sm" onclick="guardarNota()"><i class="bi bi-save me-2"></i>GUARDAR VENTA</button>
                         </div>
                     </div>
                 </div>
@@ -104,38 +107,28 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalCliente" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="modalEditarNota" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 rounded-4">
-                <div class="modal-header border-0 pb-0"><h5 class="fw-bold" id="modalClienteTitulo">Nuevo Cliente</h5></div>
+                <div class="modal-header border-0 pb-0"><h5 class="fw-bold">Editar Nota de Venta</h5></div>
                 <div class="modal-body">
-                    <input type="hidden" id="editCliId">
-                    <input type="text" id="nomCli" class="form-control mb-3" placeholder="Nombre Completo">
-                    <input type="text" id="telCli" class="form-control" placeholder="Teléfono">
+                    <input type="hidden" id="editNotaId">
+                    <div id="editItemsContainer"></div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <h4 class="fw-bold text-primary">Total: $<span id="editTotalTxt">0.00</span></h4>
+                    </div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-primary" type="button" onclick="guardarCliente()">Guardar</button>
+                    <button class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    <button class="btn btn-primary" onclick="actualizarNota()">Guardar Cambios</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="modalModelo" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4">
-                <div class="modal-header border-0 pb-0"><h5 class="fw-bold" id="modalModeloTitulo">Nuevo Modelo</h5></div>
-                <div class="modal-body">
-                    <input type="hidden" id="editModId">
-                    <input type="text" id="nomMod" class="form-control" placeholder="Nombre del Modelo">
-                </div>
-                <div class="modal-footer border-0">
-                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-primary" type="button" onclick="guardarModelo()">Guardar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="modalCliente" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4"><div class="modal-header border-0 pb-0"><h5 class="fw-bold" id="modalClienteTitulo">Cliente</h5></div><div class="modal-body"><input type="hidden" id="editCliId"><input type="text" id="nomCli" class="form-control mb-3" placeholder="Nombre"><input type="text" id="telCli" class="form-control" placeholder="Teléfono"></div><div class="modal-footer border-0"><button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="guardarCliente()">Guardar</button></div></div></div></div>
+
+    <div class="modal fade" id="modalModelo" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4"><div class="modal-header border-0 pb-0"><h5 class="fw-bold" id="modalModeloTitulo">Modelo</h5></div><div class="modal-body"><input type="hidden" id="editModId"><input type="text" id="nomMod" class="form-control" placeholder="Nombre Modelo"></div><div class="modal-footer border-0"><button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="guardarModelo()">Guardar</button></div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="app.js"></script>
