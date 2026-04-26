@@ -8,21 +8,62 @@ const headers = {
     "Prefer": "return=representation"
 };
 
-// ... al inicio del archivo ...
+// Configuración de Supabase
+const SB_URL = "https://coywogyelfaspxlsctjv.supabase.co/rest/v1";
+const SB_KEY = "TU_ANON_KEY_AQUI"; // Reemplázala con tu llave real
+const headers = {
+    "apikey": SB_KEY,
+    "Authorization": `Bearer ${SB_KEY}`,
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+};
 
-document.getElementById('sidebarCollapse').addEventListener('click', function() {
-    document.getElementById('sidebar').classList.toggle('active');
-});
+let appData = {
+    clientes: [],
+    modelos: [],
+    notas: []
+};
 
+// Instancias de Modales de Bootstrap
+let modalCli, modalMod;
+
+// 1. INICIALIZACIÓN
+async function init() {
+    try {
+        await Promise.all([fetchClientes(), fetchModelos()]);
+        renderSelectors();
+        renderTablas();
+        addItem(); 
+        
+        // Configurar el botón del sidebar
+        document.getElementById('sidebarCollapse').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
+        });
+    } catch (error) {
+        console.error("Error al iniciar:", error);
+        notify("Error al conectar con la base de datos", "bg-danger");
+    }
+}
+
+// 2. OBTENCIÓN DE DATOS (FETCH)
+async function fetchClientes() {
+    const res = await fetch(`${SB_URL}/clientes?select=*&order=nombre.asc`, { headers });
+    appData.clientes = await res.json();
+}
+
+async function fetchModelos() {
+    const res = await fetch(`${SB_URL}/modelos?select=*&order=nombre.asc`, { headers });
+    appData.modelos = await res.json();
+}
+
+// 3. NAVEGACIÓN Y NOTIFICACIONES
 function showSection(section) {
-    // Ocultar todas las secciones
     document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
     document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
     
-    // Mostrar la seleccionada
     document.getElementById('sec-' + section).classList.remove('d-none');
+    document.getElementById('menu-' + section).classList.add('active');
     
-    // Cambiar título y estilo del menú
     const titulos = {
         'notas': 'Crear Nota',
         'historial': 'Historial de Ventas',
@@ -31,51 +72,25 @@ function showSection(section) {
     };
     document.getElementById('sectionTitle').innerText = titulos[section];
     
-    // Si estás en móvil, al hacer clic podrías querer cerrar el sidebar
     if (window.innerWidth < 768) {
         document.getElementById('sidebar').classList.add('active');
     }
 }
 
-// ... mantén tus funciones de fetchClientes, fetchModelos y guardarNota iguales ...
-
-let appData = {
-    clientes: [],
-    modelos: []
-};
-
-// 1. Cargar datos iniciales
-async function init() {
-    try {
-        await Promise.all([fetchClientes(), fetchModelos()]);
-        renderSelectors();
-        addItem(); // Inicia con una fila de producto vacía
-    } catch (error) {
-        console.error("Error al iniciar:", error);
-    }
+function notify(msg, color = 'bg-dark') {
+    const toastEl = document.getElementById('liveToast');
+    const toastBody = document.getElementById('toastMsg');
+    toastEl.className = `toast align-items-center text-white ${color} border-0 rounded-3 shadow`;
+    toastBody.innerText = msg;
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
 }
 
-async function fetchClientes() {
-    const res = await fetch(`${SB_URL}/clientes?select=*`, { headers });
-    appData.clientes = await res.json();
-}
-
-async function fetchModelos() {
-    const res = await fetch(`${SB_URL}/modelos?select=*`, { headers });
-    appData.modelos = await res.json();
-}
-
-function renderSelectors() {
-    const sel = document.getElementById('selCliente');
-    sel.innerHTML = '<option value="">Selecciona un cliente...</option>' + 
-        appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-}
-
-// 2. Gestión de filas de productos
+// 4. GESTIÓN DE NOTAS (VENTAS)
 function addItem() {
     const container = document.getElementById('itemsContainer');
     const div = document.createElement('div');
-    div.className = 'item-row card p-3 mb-2 border-light shadow-sm';
+    div.className = 'item-row card p-3 mb-2 border-0 bg-light rounded-3';
     
     const opcionesModelos = appData.modelos.map(m => 
         `<option value="${m.id}">${m.nombre}</option>`
@@ -83,23 +98,21 @@ function addItem() {
 
     div.innerHTML = `
         <div class="row g-2">
-            <div class="col-12 mb-2">
-                <select class="form-select sel-modelo fw-bold border-0 bg-light">
-                    ${opcionesModelos}
-                </select>
+            <div class="col-12 mb-1">
+                <select class="form-select sel-modelo fw-bold border-0 bg-white">${opcionesModelos}</select>
             </div>
             <div class="col-12 mb-2">
-                <input type="text" class="form-control form-control-sm in-desc border-0" placeholder="Detalle (Color, material, etc.)">
+                <input type="text" class="form-control form-control-sm in-desc border-0 bg-white" placeholder="Descripción">
             </div>
             <div class="col-4">
-                <input type="number" class="form-control in-cant" placeholder="Cant." oninput="actualizarTotal()">
+                <input type="number" class="form-control in-cant border-0" placeholder="Cant." oninput="actualizarTotal()">
             </div>
             <div class="col-4">
-                <input type="number" class="form-control in-precio" placeholder="Precio" oninput="actualizarTotal()">
+                <input type="number" class="form-control in-precio border-0" placeholder="Precio" oninput="actualizarTotal()">
             </div>
             <div class="col-4 d-flex align-items-center justify-content-end">
-                <button class="btn btn-sm btn-outline-danger border-0" onclick="this.closest('.item-row').remove(); actualizarTotal();">
-                    <i class="bi bi-trash"></i>
+                <button class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('.item-row').remove(); actualizarTotal();">
+                    <i class="bi bi-trash fs-5"></i>
                 </button>
             </div>
         </div>
@@ -107,66 +120,45 @@ function addItem() {
     container.appendChild(div);
 }
 
-function calcularTotal() {
+function actualizarTotal() {
     let total = 0;
     document.querySelectorAll('.item-row').forEach(row => {
         const cant = parseFloat(row.querySelector('.in-cant').value) || 0;
         const prec = parseFloat(row.querySelector('.in-precio').value) || 0;
         total += (cant * prec);
     });
-    return total;
-}
-
-function actualizarTotal() {
-    const total = calcularTotal();
     document.getElementById('totalTxt').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
 }
 
-// 3. Guardado Relacional (Notas + Detalles)
 async function guardarNota() {
     const clienteId = document.getElementById('selCliente').value;
-    if (!clienteId) return alert("Selecciona un cliente");
-
     const filas = document.querySelectorAll('.item-row');
-    if (filas.length === 0) return alert("Agrega al menos un producto");
-
-    const btn = document.querySelector('.btn-primary');
-    btn.disabled = true;
-    btn.innerText = "Guardando...";
+    if (!clienteId || filas.length === 0) return notify("Faltan datos", "bg-warning");
 
     try {
-        // PASO A: Crear la Nota y obtener su ID UUID
-        const notaData = {
-            cliente_id: clienteId,
-            total: calcularTotal(),
-            fecha: new Date().toISOString()
-        };
-
+        // Guardar Nota Principal
         const resNota = await fetch(`${SB_URL}/notas`, {
             method: 'POST',
-            headers: {
-                ...headers,
-                "Prefer": "return=representation" // Importante para recibir el ID generado
-            },
-            body: JSON.stringify(notaData)
+            headers,
+            body: JSON.stringify({
+                cliente_id: clienteId,
+                total: parseFloat(document.getElementById('totalTxt').innerText.replace(/,/g, '')),
+                fecha: new Date().toISOString().split('T')[0]
+            })
         });
 
         const datosNota = await resNota.json();
-        if (!resNota.ok) throw new Error(datosNota.message || "Error al crear la nota");
-        
-        // Obtenemos el ID de la nota recién creada
         const nuevoIdNota = datosNota[0].id;
 
-        // PASO B: Preparar los detalles vinculados
+        // Guardar Detalles
         const detalles = [];
         filas.forEach(row => {
             const mId = row.querySelector('.sel-modelo').value;
             const cant = parseInt(row.querySelector('.in-cant').value) || 0;
             const prec = parseFloat(row.querySelector('.in-precio').value) || 0;
-
             if (mId && cant > 0) {
                 detalles.push({
-                    nota_id: nuevoIdNota, // RELACIÓN: vinculamos al ID de la nota
+                    nota_id: nuevoIdNota,
                     modelo_id: mId,
                     descripcion: row.querySelector('.in-desc').value,
                     cantidad: cant,
@@ -176,31 +168,124 @@ async function guardarNota() {
             }
         });
 
-        // PASO C: Guardar todos los detalles en un solo envío
-        if (detalles.length > 0) {
-            const resDetalle = await fetch(`${SB_URL}/detalle_notas`, {
-                method: 'POST',
-                headers: { ...headers },
-                body: JSON.stringify(detalles)
-            });
+        await fetch(`${SB_URL}/detalle_notas`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(detalles)
+        });
 
-            if (!resDetalle.ok) {
-                const errorDet = await resDetalle.json();
-                throw new Error("Error en detalles: " + errorDet.message);
-            }
-        }
-
-        alert("¡Venta guardada con éxito!");
-        location.reload();
-
+        notify("Nota guardada con éxito", "bg-success");
+        setTimeout(() => location.reload(), 1500);
     } catch (error) {
-        console.error("Error completo:", error);
-        alert("Error: " + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "GENERAR PDF Y GUARDAR";
+        notify("Error al guardar", "bg-danger");
     }
 }
 
-// Iniciar aplicación
+// 5. GESTIÓN DE CLIENTES
+function abrirModalCliente(id = null) {
+    modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
+    document.getElementById('editClienteId').value = id || '';
+    
+    if(id) {
+        const c = appData.clientes.find(cli => cli.id === id);
+        document.getElementById('cliNombre').value = c.nombre;
+        document.getElementById('cliCiudad').value = c.ciudad || '';
+        document.getElementById('cliTel').value = c.telefono || '';
+        document.getElementById('modalClienteTitulo').innerText = 'Editar Cliente';
+    } else {
+        document.getElementById('cliNombre').value = '';
+        document.getElementById('cliCiudad').value = '';
+        document.getElementById('cliTel').value = '';
+        document.getElementById('modalClienteTitulo').innerText = 'Nuevo Cliente';
+    }
+    modalCli.show();
+}
+
+async function guardarCliente() {
+    const id = document.getElementById('editClienteId').value;
+    const data = {
+        nombre: document.getElementById('cliNombre').value,
+        ciudad: document.getElementById('cliCiudad').value,
+        telefono: document.getElementById('cliTel').value
+    };
+
+    const url = id ? `${SB_URL}/clientes?id=eq.${id}` : `${SB_URL}/clientes`;
+    const method = id ? 'PATCH' : 'POST';
+
+    const res = await fetch(url, { method, headers, body: JSON.stringify(data) });
+    if(res.ok) {
+        notify(id ? "Cliente actualizado" : "Cliente registrado", "bg-success");
+        modalCli.hide();
+        await fetchClientes();
+        renderTablas();
+        renderSelectors();
+    }
+}
+
+// 6. GESTIÓN DE MODELOS
+function abrirModalModelo(id = null) {
+    modalMod = new bootstrap.Modal(document.getElementById('modalModelo'));
+    document.getElementById('editModeloId').value = id || '';
+    
+    if(id) {
+        const m = appData.modelos.find(mod => mod.id === id);
+        document.getElementById('modNombre').value = m.nombre;
+        document.getElementById('modalModeloTitulo').innerText = 'Editar Modelo';
+    } else {
+        document.getElementById('modNombre').value = '';
+        document.getElementById('modalModeloTitulo').innerText = 'Nuevo Modelo';
+    }
+    modalMod.show();
+}
+
+async function guardarModelo() {
+    const id = document.getElementById('editModeloId').value;
+    const data = { nombre: document.getElementById('modNombre').value };
+
+    const url = id ? `${SB_URL}/modelos?id=eq.${id}` : `${SB_URL}/modelos`;
+    const method = id ? 'PATCH' : 'POST';
+
+    const res = await fetch(url, { method, headers, body: JSON.stringify(data) });
+    if(res.ok) {
+        notify("Modelo actualizado", "bg-success");
+        modalMod.hide();
+        await fetchModelos();
+        renderTablas();
+    }
+}
+
+// 7. RENDERIZADO DE INTERFAZ
+function renderSelectors() {
+    const sel = document.getElementById('selCliente');
+    sel.innerHTML = '<option value="">-- Seleccionar --</option>' + 
+        appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+}
+
+function renderTablas() {
+    const tbodyCli = document.getElementById('tablaClientesBody');
+    tbodyCli.innerHTML = appData.clientes.map(c => `
+        <tr>
+            <td class="px-4 fw-bold">${c.nombre}</td>
+            <td class="text-muted small">${c.ciudad || '-'}</td>
+            <td class="text-end px-4">
+                <button class="btn btn-sm btn-light rounded-pill" onclick="abrirModalCliente('${c.id}')">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    const tbodyMod = document.getElementById('tablaModelosBody');
+    tbodyMod.innerHTML = appData.modelos.map(m => `
+        <tr>
+            <td class="px-4 fw-bold">${m.nombre}</td>
+            <td class="text-end px-4">
+                <button class="btn btn-sm btn-light rounded-pill" onclick="abrirModalModelo('${m.id}')">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
 window.onload = init;
