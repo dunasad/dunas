@@ -195,17 +195,23 @@ async function guardarCliente() {
     const id = document.getElementById('editClienteId').value;
     const data = {
         nombre: document.getElementById('cliNombre').value,
-        destino: document.getElementById('cliCiudad').value, // Se guarda como 'destino'
-        tel: document.getElementById('cliTel').value        // Se guarda como 'tel'
+        destino: document.getElementById('cliCiudad').value,
+        tel: document.getElementById('cliTel').value
     };
 
     const url = id ? `${SB_URL}/clientes?id=eq.${id}` : `${SB_URL}/clientes`;
     const method = id ? 'PATCH' : 'POST';
 
-    const res = await fetch(url, { method, headers, body: JSON.stringify(data) });
+    // Usamos Prefer: resolution=merge o simplemente ignoramos el body de respuesta
+    const res = await fetch(url, { 
+        method, 
+        headers: { ...headers, "Prefer": "return=minimal" }, // return=minimal evita el error de lectura post-guardado
+        body: JSON.stringify(data) 
+    });
+
     if(res.ok) {
-        notify(id ? "Cliente actualizado" : "Cliente registrado", "bg-success");
-        modalCli.hide();
+        notify("Cliente guardado", "bg-success");
+        bootstrap.Modal.getInstance(document.getElementById('modalCliente')).hide();
         await fetchClientes();
         renderTablas();
         renderSelectors();
@@ -287,18 +293,17 @@ function renderTablas() {
     `).join('');
 }
 
-// --- FUNCIÓN PARA ELIMINAR ---
+// Variables para el control de eliminación
 let objetoEliminar = { tabla: '', id: '', nombre: '' };
 const modalConf = new bootstrap.Modal(document.getElementById('modalConfirmar'));
 
 function eliminarRegistro(tabla, id, nombre) {
-    // Guardamos los datos temporalmente
     objetoEliminar = { tabla, id, nombre };
-    document.getElementById('confirmMsgText').innerText = `Vas a eliminar a "${nombre}".`;
+    document.getElementById('confirmMsgText').innerText = `¿Seguro que quieres eliminar a "${nombre}"?`;
     modalConf.show();
 }
 
-// Escuchador para el botón del modal de confirmación
+// Evento para el botón de la ventana nueva
 document.getElementById('btnConfirmarEliminar').onclick = async () => {
     const { tabla, id } = objetoEliminar;
     modalConf.hide();
@@ -310,20 +315,15 @@ document.getElementById('btnConfirmarEliminar').onclick = async () => {
         });
 
         if (res.ok) {
-            notify("Registro eliminado con éxito", "bg-success");
-            if (tabla === 'clientes') {
-                await fetchClientes();
-                renderSelectors();
-            } else {
-                await fetchModelos();
-            }
+            notify("Registro eliminado", "bg-success");
+            tabla === 'clientes' ? await fetchClientes() : await fetchModelos();
+            if(tabla === 'clientes') renderSelectors();
             renderTablas();
-        } else {
-            notify("Error: El registro está en uso", "bg-warning");
         }
-    } catch (error) {
-        notify("No se pudo eliminar", "bg-danger");
+    } catch (e) {
+        notify("Error al eliminar", "bg-danger");
     }
 };
+
 
 window.onload = init;
