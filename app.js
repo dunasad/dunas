@@ -288,9 +288,20 @@ function renderTablas() {
 }
 
 // --- FUNCIÓN PARA ELIMINAR ---
-async function eliminarRegistro(tabla, id, nombre) {
-    // Confirmación sencilla pero efectiva
-    if (!confirm(`¿Estás seguro de eliminar a "${nombre}"? Esta acción no se puede deshacer.`)) return;
+let objetoEliminar = { tabla: '', id: '', nombre: '' };
+const modalConf = new bootstrap.Modal(document.getElementById('modalConfirmar'));
+
+function eliminarRegistro(tabla, id, nombre) {
+    // Guardamos los datos temporalmente
+    objetoEliminar = { tabla, id, nombre };
+    document.getElementById('confirmMsgText').innerText = `Vas a eliminar a "${nombre}".`;
+    modalConf.show();
+}
+
+// Escuchador para el botón del modal de confirmación
+document.getElementById('btnConfirmarEliminar').onclick = async () => {
+    const { tabla, id } = objetoEliminar;
+    modalConf.hide();
 
     try {
         const res = await fetch(`${SB_URL}/${tabla}?id=eq.${id}`, {
@@ -299,8 +310,7 @@ async function eliminarRegistro(tabla, id, nombre) {
         });
 
         if (res.ok) {
-            notify("Registro eliminado con éxito", "bg-danger");
-            // Recargar datos según lo que se borró
+            notify("Registro eliminado con éxito", "bg-success");
             if (tabla === 'clientes') {
                 await fetchClientes();
                 renderSelectors();
@@ -309,16 +319,11 @@ async function eliminarRegistro(tabla, id, nombre) {
             }
             renderTablas();
         } else {
-            const err = await res.json();
-            if (err.code === "23503") {
-                notify("No se puede eliminar: tiene notas asociadas", "bg-warning");
-            } else {
-                throw new Error();
-            }
+            notify("Error: El registro está en uso", "bg-warning");
         }
     } catch (error) {
-        notify("Error al intentar eliminar", "bg-danger");
+        notify("No se pudo eliminar", "bg-danger");
     }
-}
+};
 
 window.onload = init;
