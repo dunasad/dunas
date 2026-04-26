@@ -8,12 +8,11 @@ const headers = {
     "Prefer": "return=minimal"
 };
 
-// --- VARIABLES GLOBALES ---
 let appData = { clientes: [], modelos: [] };
 let objetoEliminar = { tabla: '', id: '', nombre: '' };
 let modalConf, modalCli, modalMod;
 
-// 1. FUNCIÓN DE LOGIN (CONSULTA A SUPABASE)
+// 1. LOGIN
 async function checkAccess() {
     const user = document.getElementById('userInput').value;
     const pass = document.getElementById('passInput').value;
@@ -25,57 +24,61 @@ async function checkAccess() {
     btn.innerText = "Verificando...";
 
     try {
-        const res = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { headers });
-        const data = await res.json();
+        const response = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { 
+            headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } 
+        });
+        const data = await response.json();
 
-        if (data.length > 0) {
-            // 1. Ocultar login con d-none
+        if (data && data.length > 0) {
+            const nombreUsuario = data[0].nombre;
+            // Ocultar login y mostrar app
             document.getElementById('login-screen').classList.add('d-none');
-            // 2. Mostrar la app quitando d-none
             document.getElementById('main-app').classList.remove('d-none');
             
-            init(); // Cargar datos de Supabase
+            // Forzar renderizado inicial
+            await init();
+            notify(`Bienvenido, ${nombreUsuario}`, "bg-success");
         } else {
-            alert("Usuario o contraseña incorrectos");
+            alert("Usuario o contraseña incorrectos.");
             btn.disabled = false;
             btn.innerText = "ENTRAR";
         }
     } catch (error) {
         console.error(error);
+        alert("Error de conexión");
         btn.disabled = false;
         btn.innerText = "ENTRAR";
     }
 }
 
-// 2. INICIALIZACIÓN DE LA APP
+// 2. INICIALIZACIÓN
 async function init() {
     try {
-        // Inicializamos instancias de modales de Bootstrap
         modalConf = new bootstrap.Modal(document.getElementById('modalConfirmar'));
         modalCli = new bootstrap.Modal(document.getElementById('modalCliente'));
         modalMod = new bootstrap.Modal(document.getElementById('modalModelo'));
 
-        // Cargamos datos iniciales
         await Promise.all([fetchClientes(), fetchModelos()]);
         renderSelectors();
         renderTablas();
-        
-        // Si tienes la función addItem() definida para las notas:
-        if (typeof addItem === 'function') addItem();
 
-        // Control del Sidebar
+        if (typeof addItem === 'function' && document.getElementById('itemsContainer').innerHTML === "") {
+            addItem();
+        }
+
         const sideBtn = document.getElementById('sidebarCollapse');
         if(sideBtn) {
             sideBtn.onclick = () => document.getElementById('sidebar').classList.toggle('active');
         }
         
-        // Botón de confirmación de eliminación
         document.getElementById('btnConfirmarEliminar').onclick = ejecutarEliminacion;
 
-    } catch (e) { console.error("Error al iniciar app:", e); }
+    } catch (e) { 
+        console.error("Error en init:", e);
+    }
 }
 
-// 3. FETCH DE DATOS
+// 3. FETCH
 async function fetchClientes() {
     const res = await fetch(`${SB_URL}/clientes?select=*&order=nombre.asc`, { headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } });
     appData.clientes = await res.json();
@@ -86,7 +89,7 @@ async function fetchModelos() {
     appData.modelos = await res.json();
 }
 
-// 4. NAVEGACIÓN
+// 4. FUNCIONES DE UI
 function showSection(section) {
     document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
     document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
@@ -105,89 +108,7 @@ function notify(msg, color = 'bg-dark') {
     toast.show();
 }
 
-// 5. GESTIÓN DE CLIENTES
-window.abrirModalCliente = (id = null) => {
-    document.getElementById('editClienteId').value = id || '';
-    if(id) {
-        const c = appData.clientes.find(cli => cli.id == id);
-        document.getElementById('cliNombre').value = c.nombre;
-        document.getElementById('cliCiudad').value = c.destino || '';
-        document.getElementById('cliTel').value = c.tel || '';
-        document.getElementById('modalClienteTitulo').innerText = 'Editar Cliente';
-    } else {
-        document.getElementById('cliNombre').value = '';
-        document.getElementById('cliCiudad').value = '';
-        document.getElementById('cliTel').value = '';
-        document.getElementById('modalClienteTitulo').innerText = 'Nuevo Cliente';
-    }
-    modalCli.show();
-};
-
-window.guardarCliente = async () => {
-    const id = document.getElementById('editClienteId').value;
-    const data = {
-        nombre: document.getElementById('cliNombre').value,
-        destino: document.getElementById('cliCiudad').value,
-        tel: document.getElementById('cliTel').value
-    };
-    const url = id ? `${SB_URL}/clientes?id=eq.${id}` : `${SB_URL}/clientes`;
-    const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers, body: JSON.stringify(data) });
-    if(res.ok) {
-        modalCli.hide();
-        notify("Cliente guardado con éxito", "bg-success");
-        await fetchClientes();
-        renderTablas();
-        renderSelectors();
-    }
-};
-
-// 6. GESTIÓN DE MODELOS
-window.abrirModalModelo = (id = null) => {
-    document.getElementById('editModeloId').value = id || '';
-    if(id) {
-        const m = appData.modelos.find(mod => mod.id == id);
-        document.getElementById('modNombre').value = m.nombre;
-        document.getElementById('modalModeloTitulo').innerText = 'Editar Modelo';
-    } else {
-        document.getElementById('modNombre').value = '';
-        document.getElementById('modalModeloTitulo').innerText = 'Nuevo Modelo';
-    }
-    modalMod.show();
-};
-
-window.guardarModelo = async () => {
-    const id = document.getElementById('editModeloId').value;
-    const data = { nombre: document.getElementById('modNombre').value };
-    const url = id ? `${SB_URL}/modelos?id=eq.${id}` : `${SB_URL}/modelos`;
-    const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers, body: JSON.stringify(data) });
-    if(res.ok) {
-        modalMod.hide();
-        notify("Modelo guardado con éxito", "bg-success");
-        await fetchModelos();
-        renderTablas();
-    }
-};
-
-// 7. ELIMINACIÓN
-window.eliminarRegistro = (tabla, id, nombre) => {
-    objetoEliminar = { tabla, id, nombre };
-    document.getElementById('confirmMsgText').innerText = `¿Estás seguro de eliminar a "${nombre}"?`;
-    modalConf.show();
-};
-
-async function ejecutarEliminacion() {
-    modalConf.hide();
-    const { tabla, id } = objetoEliminar;
-    const res = await fetch(`${SB_URL}/${tabla}?id=eq.${id}`, { method: 'DELETE', headers });
-    if(res.ok) {
-        notify("Registro eliminado", "bg-danger");
-        tabla === 'clientes' ? await fetchClientes() : await fetchModelos();
-        if(tabla === 'clientes') renderSelectors();
-        renderTablas();
-    }
-}
-
-// 8. RENDERIZADO
+// 5. RENDER
 function renderSelectors() {
     const sel = document.getElementById('selCliente');
     if(sel) {
@@ -224,4 +145,130 @@ function renderTablas() {
     }
 }
 
-// RECUERDA DEFINIR TUS FUNCIONES addItem() y guardarNota() AQUÍ SI NO LAS TIENES
+// 6. LOGICA CLIENTES/MODELOS/ELIMINAR
+window.abrirModalCliente = (id = null) => {
+    document.getElementById('editClienteId').value = id || '';
+    if(id) {
+        const c = appData.clientes.find(cli => cli.id == id);
+        document.getElementById('cliNombre').value = c.nombre;
+        document.getElementById('cliCiudad').value = c.destino || '';
+        document.getElementById('cliTel').value = c.tel || '';
+        document.getElementById('modalClienteTitulo').innerText = 'Editar Cliente';
+    } else {
+        document.getElementById('cliNombre').value = '';
+        document.getElementById('cliCiudad').value = '';
+        document.getElementById('cliTel').value = '';
+        document.getElementById('modalClienteTitulo').innerText = 'Nuevo Cliente';
+    }
+    modalCli.show();
+};
+
+window.guardarCliente = async () => {
+    const id = document.getElementById('editClienteId').value;
+    const data = {
+        nombre: document.getElementById('cliNombre').value,
+        destino: document.getElementById('cliCiudad').value,
+        tel: document.getElementById('cliTel').value
+    };
+    const url = id ? `${SB_URL}/clientes?id=eq.${id}` : `${SB_URL}/clientes`;
+    const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers, body: JSON.stringify(data) });
+    if(res.ok) {
+        modalCli.hide();
+        notify("Cliente guardado", "bg-success");
+        await fetchClientes();
+        renderTablas();
+        renderSelectors();
+    }
+};
+
+window.abrirModalModelo = (id = null) => {
+    document.getElementById('editModeloId').value = id || '';
+    if(id) {
+        const m = appData.modelos.find(mod => mod.id == id);
+        document.getElementById('modNombre').value = m.nombre;
+        document.getElementById('modalModeloTitulo').innerText = 'Editar Modelo';
+    } else {
+        document.getElementById('modNombre').value = '';
+        document.getElementById('modalModeloTitulo').innerText = 'Nuevo Modelo';
+    }
+    modalMod.show();
+};
+
+window.guardarModelo = async () => {
+    const id = document.getElementById('editModeloId').value;
+    const data = { nombre: document.getElementById('modNombre').value };
+    const url = id ? `${SB_URL}/modelos?id=eq.${id}` : `${SB_URL}/modelos`;
+    const res = await fetch(url, { method: id ? 'PATCH' : 'POST', headers, body: JSON.stringify(data) });
+    if(res.ok) {
+        modalMod.hide();
+        notify("Modelo guardado", "bg-success");
+        await fetchModelos();
+        renderTablas();
+    }
+};
+
+window.eliminarRegistro = (tabla, id, nombre) => {
+    objetoEliminar = { tabla, id, nombre };
+    document.getElementById('confirmMsgText').innerText = `¿Estás seguro de eliminar a "${nombre}"?`;
+    modalConf.show();
+};
+
+async function ejecutarEliminacion() {
+    modalConf.hide();
+    const { tabla, id } = objetoEliminar;
+    const res = await fetch(`${SB_URL}/${tabla}?id=eq.${id}`, { method: 'DELETE', headers });
+    if(res.ok) {
+        notify("Eliminado", "bg-danger");
+        tabla === 'clientes' ? await fetchClientes() : await fetchModelos();
+        if(tabla === 'clientes') renderSelectors();
+        renderTablas();
+    }
+}
+
+// 7. NOTAS (Items Dinámicos)
+window.addItem = () => {
+    const id = Date.now();
+    const html = `
+        <div class="item-row mb-3 p-3 bg-light rounded-3 position-relative" id="item-${id}">
+            <div class="row g-2">
+                <div class="col-12 col-md-4">
+                    <label class="small text-muted fw-bold">MODELO</label>
+                    <select class="form-select border-0 select-modelo">${appData.modelos.map(m => `<option>${m.nombre}</option>`).join('')}</select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="small text-muted fw-bold">CANTIDAD</label>
+                    <input type="number" class="form-control border-0 input-cant" value="1" oninput="calcularTotal()">
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="small text-muted fw-bold">PRECIO</label>
+                    <input type="number" class="form-control border-0 input-precio" value="0" oninput="calcularTotal()">
+                </div>
+                <div class="col-12 col-md-2 d-flex align-items-end">
+                    <button class="btn btn-outline-danger border-0 w-100" onclick="removeItem(${id})"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+        </div>`;
+    document.getElementById('itemsContainer').insertAdjacentHTML('beforeend', html);
+    calcularTotal();
+};
+
+window.removeItem = (id) => {
+    document.getElementById(`item-${id}`).remove();
+    calcularTotal();
+};
+
+window.calcularTotal = () => {
+    let total = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+        const cant = parseFloat(row.querySelector('.input-cant').value) || 0;
+        const precio = parseFloat(row.querySelector('.input-precio').value) || 0;
+        total += (cant * precio);
+    });
+    document.getElementById('totalTxt').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+};
+
+window.guardarNota = () => {
+    const clienteId = document.getElementById('selCliente').value;
+    if(!clienteId) return alert("Selecciona un cliente");
+    notify("Nota guardada (Simulación)", "bg-success");
+};
