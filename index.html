@@ -8,19 +8,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <style>
-        #login-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #f8f9fa; z-index: 10001; display: flex;
-            align-items: center; justify-content: center;
-        }
-        .login-card {
-            width: 100%; max-width: 380px; padding: 2.5rem;
-            border: none; border-radius: 1.5rem; background: white;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
-        .wrapper.d-none { display: none !important; }
+        :root { --primary: #0d6efd; --sidebar-width: 250px; }
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; overflow-x: hidden; }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8f9fa; z-index: 10001; display: flex; align-items: center; justify-content: center; }
+        .login-card { width: 100%; max-width: 380px; padding: 2.5rem; border-radius: 1.5rem; background: white; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .wrapper { display: flex; width: 100%; align-items: stretch; }
+        #sidebar { min-width: var(--sidebar-width); max-width: var(--sidebar-width); background: #212529; color: #fff; transition: all 0.3s; min-height: 100vh; }
+        #sidebar.active { margin-left: calc(-1 * var(--sidebar-width)); }
+        #sidebar .sidebar-header { padding: 20px; text-align: center; background: #1a1d20; }
+        #sidebar ul li a { padding: 15px 20px; display: block; color: #adb5bd; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        #sidebar ul li.active > a, #sidebar ul li a:hover { color: #fff; background: var(--primary); }
+        #content { width: 100%; padding: 0; min-height: 100vh; }
+        .app-section { padding: 20px; }
+        .d-none { display: none !important; }
+        .logo-img { width: 100px; filter: brightness(0) invert(1); }
     </style>
 </head>
 <body>
@@ -29,15 +31,9 @@
         <div class="login-card text-center">
             <img src="logo.png" alt="DUNAS" width="120" class="mb-4 mx-auto d-block">
             <h5 class="fw-bold mb-4">Acceso DUNAS</h5>
-            <div class="mb-3">
-                <input type="text" id="userInput" class="form-control bg-light border-0 py-2 text-center rounded-3" placeholder="Usuario">
-            </div>
-            <div class="mb-4">
-                <input type="password" id="passInput" class="form-control bg-light border-0 py-2 text-center rounded-3" placeholder="Contraseña">
-            </div>
-            <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnLogin" onclick="checkAccess()">
-                ENTRAR
-            </button>
+            <input type="text" id="userInput" class="form-control mb-3 text-center rounded-3 py-2" placeholder="Usuario">
+            <input type="password" id="passInput" class="form-control mb-4 text-center rounded-3 py-2" placeholder="Contraseña">
+            <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill" id="btnLogin" onclick="checkAccess()">ENTRAR</button>
         </div>
     </div>
 
@@ -51,14 +47,8 @@
                     <a href="#"><i class="bi bi-file-earmark-plus"></i> <span>Notas</span></a>
                 </li>
                 <li id="menu-historial" onclick="showSection('historial')">
-    <a href="#"><i class="bi bi-clock-history"></i></a>
-</li>
-
-<div id="sec-historial" class="app-section d-none">
-    <h4 class="fw-bold">Historial de Notas</h4>
-    <div id="contenedor-historial">
-        </div>
-</div>
+                    <a href="#"><i class="bi bi-clock-history"></i> <span>Historial</span></a>
+                </li>
                 <li id="menu-clientes" onclick="showSection('clientes')">
                     <a href="#"><i class="bi bi-people"></i> <span>Clientes</span></a>
                 </li>
@@ -67,30 +57,22 @@
                 </li>
             </ul>
         </nav>
-<div id="sec-historial" class="app-section d-none">
-    <h4 class="fw-bold mb-4">Historial de Ventas</h4>
-    <div id="historialContainer">
-        </div>
-</div>
+
         <div id="content">
-            <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
-                <div class="container-fluid">
-                    <button type="button" id="sidebarCollapse" class="btn btn-outline-primary border-0">
-                        <i class="bi bi-list fs-4"></i>
-                    </button>
-                    <h5 class="ms-3 mb-0 fw-bold text-secondary" id="sectionTitle">Crear Nota</h5>
-                </div>
+            <nav class="navbar navbar-light bg-white shadow-sm px-4 py-3 mb-4">
+                <button type="button" id="sidebarCollapse" class="btn btn-outline-primary border-0"><i class="bi bi-list fs-4"></i></button>
+                <h5 class="mb-0 fw-bold text-secondary" id="sectionTitle">Crear Nota</h5>
             </nav>
 
             <div class="container-fluid px-4">
                 <div id="sec-notas" class="app-section">
                     <div class="card shadow-sm border-0 p-4 rounded-4">
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-muted small">Seleccionar Cliente</label>
+                            <label class="form-label fw-bold text-muted small">SELECCIONAR CLIENTE</label>
                             <select id="selCliente" class="form-select border-0 bg-light py-2 px-3"></select>
                         </div>
                         <div id="itemsContainer"></div>
-                        <button class="btn btn-outline-primary btn-sm w-100 rounded-3 mb-4 py-2" onclick="addItem()">
+                        <button class="btn btn-outline-primary btn-sm w-100 rounded-3 mb-4 py-2 border-dashed" onclick="addItem()">
                             <i class="bi bi-plus-circle me-1"></i> Agregar Concepto
                         </button>
                         <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-4">
@@ -105,126 +87,37 @@
                     </div>
                 </div>
 
+                <div id="sec-historial" class="app-section d-none">
+                    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="border-0 px-4">Fecha</th>
+                                        <th class="border-0">Cliente</th>
+                                        <th class="border-0">Total</th>
+                                        <th class="border-0 text-end px-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaHistorialBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="sec-clientes" class="app-section d-none">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="fw-bold mb-0">Clientes</h4>
-                        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalCliente()">
-                            <i class="bi bi-plus-lg"></i> Nuevo Cliente
-                        </button>
-                    </div>
-                    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th class="border-0 px-4">Nombre</th>
-                                        <th class="border-0">Destino</th>
-                                        <th class="border-0">Teléfono</th>
-                                        <th class="border-0 text-end px-4">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaClientesBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                     <div class="d-flex justify-content-between mb-3"><h4>Clientes</h4><button class="btn btn-primary rounded-pill" onclick="abrirModalCliente()">Nuevo Cliente</button></div>
+                     <table class="table table-white shadow-sm rounded-4"><tbody id="tablaClientesBody"></tbody></table>
                 </div>
-
                 <div id="sec-modelos" class="app-section d-none">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="fw-bold mb-0">Modelos</h4>
-                        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalModelo()">
-                            <i class="bi bi-plus-lg"></i> Nuevo Modelo
-                        </button>
-                    </div>
-                    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th class="border-0 px-4">Nombre del Modelo</th>
-                                        <th class="border-0 text-end px-4">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaModelosBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                     <div class="d-flex justify-content-between mb-3"><h4>Modelos</h4><button class="btn btn-primary rounded-pill" onclick="abrirModalModelo()">Nuevo Modelo</button></div>
+                     <table class="table table-white shadow-sm rounded-4"><tbody id="tablaModelosBody"></tbody></table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODALES -->
-    <div class="modal fade" id="modalCliente" tabindex="-1" data-bs-focus="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow">
-                <div class="modal-header border-0 px-4 pt-4">
-                    <h5 class="fw-bold" id="modalClienteTitulo">Nuevo Cliente</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body px-4 pb-4">
-                    <input type="hidden" id="editClienteId">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">NOMBRE COMPLETO</label>
-                        <input type="text" id="cliNombre" class="form-control bg-light border-0 py-2">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">CIUDAD / DESTINO</label>
-                        <input type="text" id="cliCiudad" class="form-control bg-light border-0 py-2">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">TELÉFONO</label>
-                        <input type="tel" id="cliTel" class="form-control bg-light border-0 py-2">
-                    </div>
-                    <button class="btn btn-primary w-100 py-2 fw-bold rounded-3" onclick="guardarCliente()">GUARDAR CLIENTE</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modalModelo" tabindex="-1" data-bs-focus="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow">
-                <div class="modal-header border-0 px-4 pt-4">
-                    <h5 class="fw-bold" id="modalModeloTitulo">Nuevo Modelo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body px-4 pb-4">
-                    <input type="hidden" id="editModeloId">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">NOMBRE DEL MODELO</label>
-                        <input type="text" id="modNombre" class="form-control bg-light border-0 py-2">
-                    </div>
-                    <button class="btn btn-primary w-100 py-2 fw-bold rounded-3" onclick="guardarModelo()">GUARDAR MODELO</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="modalConfirmar" tabindex="-1" data-bs-focus="false">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow">
-                <div class="modal-body text-center p-4">
-                    <i class="bi bi-exclamation-triangle text-warning display-4 mb-3"></i>
-                    <h5 class="fw-bold">¿Seguro?</h5>
-                    <p class="text-muted small mb-4" id="confirmMsgText"></p>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light w-100 rounded-3" data-bs-dismiss="modal">No</button>
-                        <button type="button" class="btn btn-danger w-100 rounded-3" id="btnConfirmarEliminar">Eliminar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="liveToast" class="toast align-items-center text-white bg-dark border-0 rounded-3" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body" id="toastMsg"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        </div>
-    </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="liveToast" class="toast align-items-center text-white bg-dark border-0 rounded-3" role="alert"><div class="d-flex"><div class="toast-body" id="toastMsg"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="app.js"></script>
