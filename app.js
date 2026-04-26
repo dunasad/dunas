@@ -19,39 +19,31 @@ async function checkAccess() {
     const pass = document.getElementById('passInput').value;
     const btn = document.getElementById('btnLogin');
 
-    if (!user || !pass) return alert("Por favor, completa los campos.");
+    if (!user || !pass) return alert("Completa los campos");
 
     btn.disabled = true;
     btn.innerText = "Verificando...";
 
     try {
-        // Consultamos la tabla 'usuarios' que creamos en Supabase
-        const response = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { 
-            method: 'GET', 
-            headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` } 
-        });
-        const data = await response.json();
+        const res = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { headers });
+        const data = await res.json();
 
-        if (data && data.length > 0) {
-            const nombreUsuario = data[0].nombre;
-            // Ocultamos login y mostramos app
+        if (data.length > 0) {
+            // 1. Ocultar login con d-none
             document.getElementById('login-screen').classList.add('d-none');
+            // 2. Mostrar la app quitando d-none
             document.getElementById('main-app').classList.remove('d-none');
             
-            notify(`Bienvenido, ${nombreUsuario}`, "bg-success");
-            
-            // Inicializamos la app después del login
-            init();
+            init(); // Cargar datos de Supabase
         } else {
-            alert("Usuario o contraseña incorrectos.");
+            alert("Usuario o contraseña incorrectos");
             btn.disabled = false;
-            btn.innerText = "ENTRAR AL PANEL";
+            btn.innerText = "ENTRAR";
         }
     } catch (error) {
         console.error(error);
-        alert("Error de conexión con el servidor.");
         btn.disabled = false;
-        btn.innerText = "ENTRAR AL PANEL";
+        btn.innerText = "ENTRAR";
     }
 }
 
