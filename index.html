@@ -5,51 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DUNAS STUDIO - Panel</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <!-- Bootstrap 5 y Iconos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #f8f9fa; z-index: 9999; display: flex;
+            background: #f8f9fa; z-index: 10001; display: flex;
             align-items: center; justify-content: center;
         }
         .login-card {
-            width: 100%; max-width: 380px; padding: 2rem;
+            width: 100%; max-width: 380px; padding: 2.5rem;
             border: none; border-radius: 1.5rem; background: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         }
         .wrapper.d-none { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- PANTALLA DE LOGIN -->
     <div id="login-screen">
-    <div class="login-card text-center">
-        <img src="logo.png" alt="DUNAS" width="120" class="mb-4 mx-auto d-block">
-        <h5 class="fw-bold mb-4">Acceso DUNAS</h5>
-        <div class="mb-3 text-start">
-            <input type="text" id="userInput" class="form-control text-center rounded-3" placeholder="Usuario">
+        <div class="login-card text-center">
+            <img src="logo.png" alt="DUNAS" width="120" class="mb-4 mx-auto d-block">
+            <h5 class="fw-bold mb-4">Acceso DUNAS</h5>
+            <div class="mb-3">
+                <input type="text" id="userInput" class="form-control bg-light border-0 py-2 text-center rounded-3" placeholder="Usuario">
+            </div>
+            <div class="mb-4">
+                <input type="password" id="passInput" class="form-control bg-light border-0 py-2 text-center rounded-3" placeholder="Contraseña">
+            </div>
+            <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm" id="btnLogin" onclick="checkAccess()">
+                ENTRAR
+            </button>
         </div>
-        <div class="mb-4 text-start">
-            <input type="password" id="passInput" class="form-control text-center rounded-3" placeholder="Contraseña">
-        </div>
-        <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill" id="btnLogin" onclick="checkAccess()">
-            ENTRAR
-        </button>
-    </div>
-</div>
-
-<div class="wrapper d-none" id="main-app">
     </div>
 
-    <!-- APLICACIÓN PRINCIPAL -->
     <div class="wrapper d-none" id="main-app">
-        <!-- SIDEBAR -->
         <nav id="sidebar">
             <div class="sidebar-header">
                 <img src="logo.png" alt="DUNAS" class="logo-img">
@@ -70,7 +62,6 @@
             </ul>
         </nav>
 
-        <!-- CONTENIDO -->
         <div id="content">
             <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
                 <div class="container-fluid">
@@ -82,15 +73,14 @@
             </nav>
 
             <div class="container-fluid px-4">
-                <!-- SECCIÓN: NOTAS -->
                 <div id="sec-notas" class="app-section">
                     <div class="card shadow-sm border-0 p-4 rounded-4">
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-muted small uppercase">Seleccionar Cliente</label>
+                            <label class="form-label fw-bold text-muted small">Seleccionar Cliente</label>
                             <select id="selCliente" class="form-select border-0 bg-light py-2 px-3"></select>
                         </div>
                         <div id="itemsContainer"></div>
-                        <button class="btn btn-outline-primary btn-sm w-100 rounded-3 mb-4 py-2 border-dashed" onclick="addItem()">
+                        <button class="btn btn-outline-primary btn-sm w-100 rounded-3 mb-4 py-2" onclick="addItem()">
                             <i class="bi bi-plus-circle me-1"></i> Agregar Concepto
                         </button>
                         <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-4">
@@ -105,7 +95,6 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN: CLIENTES -->
                 <div id="sec-clientes" class="app-section d-none">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold mb-0">Clientes</h4>
@@ -130,7 +119,6 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN: MODELOS -->
                 <div id="sec-modelos" class="app-section d-none">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold mb-0">Modelos</h4>
@@ -156,8 +144,8 @@
         </div>
     </div>
 
-    <!-- MODAL CLIENTE -->
-    <div class="modal fade" id="modalCliente" tabindex="-1" data-bs-backdrop="static" data-bs-focus="false">
+    <!-- MODALES -->
+    <div class="modal fade" id="modalCliente" tabindex="-1" data-bs-focus="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0 px-4 pt-4">
@@ -184,8 +172,7 @@
         </div>
     </div>
 
-    <!-- MODAL MODELO -->
-    <div class="modal fade" id="modalModelo" tabindex="-1" data-bs-backdrop="static" data-bs-focus="false">
+    <div class="modal fade" id="modalModelo" tabindex="-1" data-bs-focus="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0 px-4 pt-4">
@@ -204,7 +191,6 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMAR ELIMINAR -->
     <div class="modal fade" id="modalConfirmar" tabindex="-1" data-bs-focus="false">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
@@ -221,7 +207,6 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFICACIÓN -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="liveToast" class="toast align-items-center text-white bg-dark border-0 rounded-3" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
@@ -231,7 +216,6 @@
         </div>
     </div>
 
-    <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="app.js"></script>
 </body>
