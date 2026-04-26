@@ -4,175 +4,117 @@ const headers = { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Conten
 
 let appData = { clientes: [], modelos: [], notas: [] };
 
-// --- ACCESO REAL ---
+// LOGIN
 async function checkAccess() {
     const user = document.getElementById('userInput').value;
     const pass = document.getElementById('passInput').value;
-    const btn = document.getElementById('btnLogin');
-
-    if (!user || !pass) return alert("Ingresa usuario y contraseña");
-    btn.disabled = true;
-
     try {
         const response = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { headers });
         const data = await response.json();
-
-        if (data && data.length > 0) {
+        if (data.length > 0) {
             document.getElementById('login-screen').classList.add('d-none');
             document.getElementById('main-app').classList.remove('d-none');
             await init();
-        } else {
-            alert("Usuario o contraseña incorrectos");
-            btn.disabled = false;
-        }
-    } catch (e) { 
-        console.error("Error Login:", e); 
-        alert("Error de conexión con el servidor");
-        btn.disabled = false; 
-    }
+        } else { alert("Error de acceso"); }
+    } catch (e) { console.error(e); }
 }
 
-// --- INICIALIZACIÓN ---
+// INICIALIZACIÓN
 async function init() {
     await Promise.all([fetchClientes(), fetchModelos()]);
     renderSelectors();
+    renderTablas(); // Renderizar clientes y modelos en sus secciones
     addItem();
 }
 
-// --- NAVEGACIÓN CORREGIDA ---
+// NAVEGACIÓN
 window.showSection = (section) => {
     document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
     document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
-
     const sec = document.getElementById('sec-' + section);
     const menu = document.getElementById('menu-' + section);
-    
     if(sec) sec.classList.remove('d-none');
     if(menu) menu.classList.add('active');
-
-    const titulos = { 'notas': 'Crear Nota', 'historial': 'Historial de Ventas', 'clientes': 'Clientes', 'modelos': 'Modelos' };
-    document.getElementById('sectionTitle').innerText = titulos[section] || 'Panel';
-
     if(section === 'historial') fetchHistorial();
 };
 
-// --- HISTORIAL (CON RELACIÓN A CLIENTES) ---
-async function fetchHistorial() {
-    const tbody = document.getElementById('tablaHistorialBody');
-    tbody.innerHTML = "<tr><td colspan='4' class='text-center py-4'>Cargando historial...</td></tr>";
-
-    try {
-        const res = await fetch(`${SB_URL}/notas?select=*,clientes(nombre)&order=created_at.desc`, { headers });
-        const notas = await res.json();
-        
-        if (!notas || notas.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='4' class='text-center py-4'>No hay notas registradas</td></tr>";
-            return;
-        }
-
-        tbody.innerHTML = notas.map(n => `
-            <tr>
-                <td class="px-4 small">${new Date(n.created_at).toLocaleDateString()}</td>
-                <td class="fw-bold">${n.clientes ? n.clientes.nombre : 'Sin Cliente'}</td>
-                <td class="text-primary fw-bold">$${parseFloat(n.total || 0).toFixed(2)}</td>
-                <td class="text-end px-4">
-                    <button class="btn btn-sm btn-light border" title="Imprimir"><i class="bi bi-printer"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>`).join('');
-    } catch (e) { 
-        tbody.innerHTML = "<tr><td colspan='4' class='text-center text-danger'>Error al cargar datos</td></tr>"; 
-    }
-}
-
-// --- GUARDAR NOTA ---
-window.guardarNota = async () => {
-    const clienteId = document.getElementById('selCliente').value;
-    const total = parseFloat(document.getElementById('totalTxt').innerText) || 0;
-    
-    if(!clienteId) return alert("Por favor selecciona un cliente");
-
-    try {
-        const resNota = await fetch(`${SB_URL}/notas`, {
-            method: 'POST',
-            headers: { ...headers, "Prefer": "return=representation" },
-            body: JSON.stringify({ cliente_id: clienteId, total: total })
-        });
-        const dataNota = await resNota.json();
-        const notaId = dataNota[0].id;
-
-        const detalles = [];
-        document.querySelectorAll('.item-row').forEach(row => {
-            detalles.push({
-                nota_id: notaId,
-                modelo: row.querySelector('.select-modelo').value,
-                cantidad: parseInt(row.querySelector('.input-cant').value) || 0,
-                precio: parseFloat(row.querySelector('.input-precio').value) || 0
-            });
-        });
-
-        await fetch(`${SB_URL}/detalle_notas`, { method: 'POST', headers, body: JSON.stringify(detalles) });
-        
-        notify("¡Nota guardada correctamente!");
-        document.getElementById('itemsContainer').innerHTML = "";
-        document.getElementById('totalTxt').innerText = "0.00";
-        addItem();
-    } catch (e) { 
-        console.error(e);
-        alert("Error al guardar la nota"); 
-    }
+// --- GESTIÓN DE CLIENTES ---
+window.abrirModalCliente = () => { new bootstrap.Modal('#modalCliente').show(); };
+window.guardarCliente = async () => {
+    const nombre = document.getElementById('nomCli').value;
+    const telefono = document.getElementById('telCli').value;
+    await fetch(`${SB_URL}/clientes`, { method: 'POST', headers, body: JSON.stringify({ nombre, telefono }) });
+    bootstrap.Modal.getInstance('#modalCliente').hide();
+    await fetchClientes();
+    renderTablas();
+    renderSelectors();
 };
 
-// --- UTILIDADES ---
+// --- GESTIÓN DE MODELOS ---
+window.abrirModalModelo = () => { new bootstrap.Modal('#modalModelo').show(); };
+window.guardarModelo = async () => {
+    const nombre = document.getElementById('nomMod').value;
+    await fetch(`${SB_URL}/modelos`, { method: 'POST', headers, body: JSON.stringify({ nombre }) });
+    bootstrap.Modal.getInstance('#modalModelo').hide();
+    await fetchModelos();
+    renderTablas();
+};
+
+// --- RENDERIZADO DE TABLAS ---
+function renderTablas() {
+    const tbodyCli = document.getElementById('tablaClientesBody');
+    const tbodyMod = document.getElementById('tablaModelosBody');
+    
+    tbodyCli.innerHTML = appData.clientes.map(c => `<tr><td class="px-4">${c.nombre}</td><td>${c.telefono || ''}</td><td class="text-end px-4"><button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('clientes','${c.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
+    tbodyMod.innerHTML = appData.modelos.map(m => `<tr><td class="px-4">${m.nombre}</td><td class="text-end px-4"><button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('modelos','${m.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
+}
+
+window.eliminarRegistro = async (tabla, id) => {
+    if(!confirm("¿Eliminar registro?")) return;
+    await fetch(`${SB_URL}/${tabla}?id=eq.${id}`, { method: 'DELETE', headers });
+    tabla === 'clientes' ? await fetchClientes() : await fetchModelos();
+    renderTablas();
+    renderSelectors();
+};
+
+// --- EL RESTO DE FUNCIONES (HISTORIAL, NOTAS, ETC.) ---
+async function fetchHistorial() {
+    const tbody = document.getElementById('tablaHistorialBody');
+    const res = await fetch(`${SB_URL}/notas?select=*,clientes(nombre)&order=created_at.desc`, { headers });
+    const notas = await res.json();
+    tbody.innerHTML = notas.map(n => `<tr><td class="px-4 small">${new Date(n.created_at).toLocaleDateString()}</td><td class="fw-bold">${n.clientes ? n.clientes.nombre : 'S/N'}</td><td class="text-primary fw-bold">$${n.total.toFixed(2)}</td><td class="text-end px-4"><button class="btn btn-sm btn-light border me-1"><i class="bi bi-printer"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
+}
+
+window.guardarNota = async () => {
+    const clienteId = document.getElementById('selCliente').value;
+    const total = parseFloat(document.getElementById('totalTxt').innerText);
+    const resNota = await fetch(`${SB_URL}/notas`, { method: 'POST', headers: { ...headers, "Prefer": "return=representation" }, body: JSON.stringify({ cliente_id: clienteId, total: total }) });
+    const dataNota = await resNota.json();
+    const notaId = dataNota[0].id;
+    const detalles = Array.from(document.querySelectorAll('.item-row')).map(row => ({
+        nota_id: notaId,
+        modelo: row.querySelector('.select-modelo').value,
+        cantidad: parseInt(row.querySelector('.input-cant').value),
+        precio: parseFloat(row.querySelector('.input-precio').value)
+    }));
+    await fetch(`${SB_URL}/detalle_notas`, { method: 'POST', headers, body: JSON.stringify(detalles) });
+    alert("¡Nota guardada!");
+    location.reload();
+};
+
 window.addItem = () => {
     const id = Date.now();
-    const html = `
-        <div class="row g-2 mb-3 item-row align-items-center" id="item-${id}">
-            <div class="col-5">
-                <select class="form-select border-0 bg-light select-modelo">
-                    ${appData.modelos.map(m => `<option>${m.nombre}</option>`).join('')}
-                </select>
-            </div>
-            <div class="col-2"><input type="number" class="form-control border-0 bg-light input-cant" value="1" oninput="calcularTotal()"></div>
-            <div class="col-4"><input type="number" class="form-control border-0 bg-light input-precio" placeholder="Precio" oninput="calcularTotal()"></div>
-            <div class="col-1 text-end"><button class="btn text-danger p-0" onclick="document.getElementById('item-${id}').remove(); calcularTotal();"><i class="bi bi-trash-fill"></i></button></div>
-        </div>`;
+    const html = `<div class="row g-2 mb-3 item-row" id="item-${id}"><div class="col-5"><select class="form-select border-0 bg-light select-modelo">${appData.modelos.map(m => `<option>${m.nombre}</option>`).join('')}</select></div><div class="col-2"><input type="number" class="form-control border-0 bg-light input-cant" value="1" oninput="calcularTotal()"></div><div class="col-4"><input type="number" class="form-control border-0 bg-light input-precio" placeholder="Precio" oninput="calcularTotal()"></div><div class="col-1 text-end"><button class="btn text-danger p-0" onclick="document.getElementById('item-${id}').remove(); calcularTotal();"><i class="bi bi-trash"></i></button></div></div>`;
     document.getElementById('itemsContainer').insertAdjacentHTML('beforeend', html);
 };
 
 window.calcularTotal = () => {
     let t = 0;
-    document.querySelectorAll('.item-row').forEach(r => {
-        const c = r.querySelector('.input-cant').value || 0;
-        const p = r.querySelector('.input-precio').value || 0;
-        t += (c * p);
-    });
+    document.querySelectorAll('.item-row').forEach(r => { t += (r.querySelector('.input-cant').value * r.querySelector('.input-precio').value); });
     document.getElementById('totalTxt').innerText = t.toFixed(2);
 };
 
-async function fetchClientes() {
-    const res = await fetch(`${SB_URL}/clientes?select=*&order=nombre.asc`, { headers });
-    appData.clientes = await res.json();
-}
-
-async function fetchModelos() {
-    const res = await fetch(`${SB_URL}/modelos?select=*&order=nombre.asc`, { headers });
-    appData.modelos = await res.json();
-}
-
-function renderSelectors() {
-    document.getElementById('selCliente').innerHTML = '<option value="">-- Seleccionar Cliente --</option>' + 
-        appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-}
-
-function notify(m) {
-    document.getElementById('toastMsg').innerText = m;
-    const t = new bootstrap.Toast(document.getElementById('liveToast'));
-    t.show();
-}
-
-window.eliminarNota = async (id) => {
-    if(!confirm("¿Eliminar esta nota permanentemente?")) return;
-    await fetch(`${SB_URL}/notas?id=eq.${id}`, { method: 'DELETE', headers });
-    fetchHistorial();
-};
+async function fetchClientes() { const res = await fetch(`${SB_URL}/clientes?select=*&order=nombre.asc`, { headers }); appData.clientes = await res.json(); }
+async function fetchModelos() { const res = await fetch(`${SB_URL}/modelos?select=*&order=nombre.asc`, { headers }); appData.modelos = await res.json(); }
+function renderSelectors() { document.getElementById('selCliente').innerHTML = '<option value="">-- Cliente --</option>' + appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); }
+window.eliminarNota = async (id) => { if(confirm("¿Eliminar?")) { await fetch(`${SB_URL}/notas?id=eq.${id}`, { method: 'DELETE', headers }); fetchHistorial(); } };
