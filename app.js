@@ -8,130 +8,44 @@ const headers = {
     "Prefer": "return=representation"
 };
 
-let appData = { clientes: [], modelos: [] };
+let appData = {
+    clientes: [],
+    modelos: []
+};
 
+// 1. Cargar datos iniciales
 async function init() {
-    await Promise.all([fetchClientes(), fetchModelos()]);
-    renderSelectors();
+    try {
+        await Promise.all([fetchClientes(), fetchModelos()]);
+        renderSelectors();
+        addItem(); // Inicia con una fila de producto vacía
+    } catch (error) {
+        console.error("Error al iniciar:", error);
+    }
 }
 
 async function fetchClientes() {
-    const res = await fetch(`${SB_URL}/clientes?select=*&order=nombre`, { headers });
+    const res = await fetch(`${SB_URL}/clientes?select=*`, { headers });
     appData.clientes = await res.json();
 }
 
 async function fetchModelos() {
-    const res = await fetch(`${SB_URL}/modelos?select=*&order=nombre`, { headers });
+    const res = await fetch(`${SB_URL}/modelos?select=*`, { headers });
     appData.modelos = await res.json();
 }
 
 function renderSelectors() {
     const sel = document.getElementById('selCliente');
-    sel.innerHTML = '<option value="">Selecciona Cliente...</option>' + 
+    sel.innerHTML = '<option value="">Selecciona un cliente...</option>' + 
         appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
 }
 
-// Función para generar la nota y guardar en Supabase
-async function guardarNota() {
-    const clienteId = document.getElementById('selCliente').value;
-    if (!clienteId) return alert("Por favor, selecciona un cliente");
-
-    // Validar que haya al menos un producto
-    const filas = document.querySelectorAll('.item-row');
-    if (filas.length === 0) return alert("Agrega al menos un producto");
-
-    const btn = document.querySelector('.btn-primary');
-    btn.disabled = true;
-    btn.innerText = "Guardando...";
-
-    try {
-        // 1. Crear la Nota (Cabecera)
-        const notaData = {
-            cliente_id: clienteId,
-            total: calcularTotal(),
-            // No enviamos fecha si en Supabase tiene default: now()
-        };
-
-        const resNota = await fetch(`${SB_URL}/notas`, {
-            method: 'POST',
-            headers: {
-                ...headers,
-                "Prefer": "return=representation" // OBLIGATORIO para recibir el ID de vuelta
-            },
-            body: JSON.stringify(notaData)
-        });
-
-        if (!resNota.ok) {
-            const errorText = await resNota.text();
-            throw new Error(`Error en Nota: ${errorText}`);
-        }
-
-        const datosNota = await resNota.json();
-        const nuevaNota = datosNota[0]; // Supabase devuelve un array con el objeto creado
-
-        // 2. Preparar los detalles
-        const detalles = [];
-        filas.forEach(row => {
-            const mId = row.querySelector('.sel-modelo').value;
-            const cant = parseInt(row.querySelector('.in-cant').value) || 0;
-            const prec = parseFloat(row.querySelector('.in-precio').value) || 0;
-
-            if (mId && cant > 0) {
-                detalles.push({
-                    nota_id: nuevaNota.id, // El ID que acabamos de obtener
-                    modelo_id: mId,
-                    descripcion: row.querySelector('.in-desc').value,
-                    cantidad: cant,
-                    precio: prec,
-                    total: cant * prec
-                });
-            }
-        });
-
-        // 3. Guardar los detalles
-        if (detalles.length > 0) {
-            const resDetalle = await fetch(`${SB_URL}/detalle_notas`, {
-                method: 'POST',
-                headers: {
-                    ...headers,
-                    "Prefer": "return=representation"
-                },
-                body: JSON.stringify(detalles)
-            });
-
-            if (!resDetalle.ok) {
-                const errorDet = await resDetalle.text();
-                throw new Error(`Error en Detalles: ${errorDet}`);
-            }
-        }
-
-        alert("Nota y detalles guardados correctamente");
-        location.reload();
-
-    } catch (error) {
-        console.error("Error completo:", error);
-        alert("No se pudo guardar: " + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "GENERAR Y GUARDAR";
-    }
-}
-
-function calcularTotal() {
-    let total = 0;
-    document.querySelectorAll('.item-row').forEach(row => {
-        const q = parseFloat(row.querySelector('.in-cant').value) || 0;
-        const p = parseFloat(row.querySelector('.in-precio').value) || 0;
-        total += q * p;
-    });
-    return total;
-}
+// 2. Gestión de filas de productos
 function addItem() {
     const container = document.getElementById('itemsContainer');
     const div = document.createElement('div');
     div.className = 'item-row card p-3 mb-2 border-light shadow-sm';
     
-    // Generamos las opciones del selector usando los modelos cargados de Supabase
     const opcionesModelos = appData.modelos.map(m => 
         `<option value="${m.id}">${m.nombre}</option>`
     ).join('');
@@ -144,17 +58,17 @@ function addItem() {
                 </select>
             </div>
             <div class="col-12 mb-2">
-                <input type="text" class="form-control form-control-sm in-desc border-0" placeholder="Detalle (ej: Color negro / Suela blanca)">
+                <input type="text" class="form-control form-control-sm in-desc border-0" placeholder="Detalle (Color, material, etc.)">
             </div>
             <div class="col-4">
-                <input type="number" class="form-control in-cant" placeholder="Cant." oninput="actualizarTotalInterfaz()">
+                <input type="number" class="form-control in-cant" placeholder="Cant." oninput="actualizarTotal()">
             </div>
             <div class="col-4">
-                <input type="number" class="form-control in-precio" placeholder="Precio" oninput="actualizarTotalInterfaz()">
+                <input type="number" class="form-control in-precio" placeholder="Precio" oninput="actualizarTotal()">
             </div>
             <div class="col-4 d-flex align-items-center justify-content-end">
-                <button class="btn btn-sm btn-outline-danger border-0" onclick="this.closest('.item-row').remove(); actualizarTotalInterfaz();">
-                    <i class="bi bi-trash"></i> Eliminar
+                <button class="btn btn-sm btn-outline-danger border-0" onclick="this.closest('.item-row').remove(); actualizarTotal();">
+                    <i class="bi bi-trash"></i>
                 </button>
             </div>
         </div>
@@ -162,9 +76,100 @@ function addItem() {
     container.appendChild(div);
 }
 
-// Función auxiliar para mostrar el total en tiempo real mientras escribes
-function actualizarTotalInterfaz() {
+function calcularTotal() {
+    let total = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+        const cant = parseFloat(row.querySelector('.in-cant').value) || 0;
+        const prec = parseFloat(row.querySelector('.in-precio').value) || 0;
+        total += (cant * prec);
+    });
+    return total;
+}
+
+function actualizarTotal() {
     const total = calcularTotal();
     document.getElementById('totalTxt').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
 }
+
+// 3. Guardado Relacional (Notas + Detalles)
+async function guardarNota() {
+    const clienteId = document.getElementById('selCliente').value;
+    if (!clienteId) return alert("Selecciona un cliente");
+
+    const filas = document.querySelectorAll('.item-row');
+    if (filas.length === 0) return alert("Agrega al menos un producto");
+
+    const btn = document.querySelector('.btn-primary');
+    btn.disabled = true;
+    btn.innerText = "Guardando...";
+
+    try {
+        // PASO A: Crear la Nota y obtener su ID UUID
+        const notaData = {
+            cliente_id: clienteId,
+            total: calcularTotal(),
+            fecha: new Date().toISOString()
+        };
+
+        const resNota = await fetch(`${SB_URL}/notas`, {
+            method: 'POST',
+            headers: {
+                ...headers,
+                "Prefer": "return=representation" // Importante para recibir el ID generado
+            },
+            body: JSON.stringify(notaData)
+        });
+
+        const datosNota = await resNota.json();
+        if (!resNota.ok) throw new Error(datosNota.message || "Error al crear la nota");
+        
+        // Obtenemos el ID de la nota recién creada
+        const nuevoIdNota = datosNota[0].id;
+
+        // PASO B: Preparar los detalles vinculados
+        const detalles = [];
+        filas.forEach(row => {
+            const mId = row.querySelector('.sel-modelo').value;
+            const cant = parseInt(row.querySelector('.in-cant').value) || 0;
+            const prec = parseFloat(row.querySelector('.in-precio').value) || 0;
+
+            if (mId && cant > 0) {
+                detalles.push({
+                    nota_id: nuevoIdNota, // RELACIÓN: vinculamos al ID de la nota
+                    modelo_id: mId,
+                    descripcion: row.querySelector('.in-desc').value,
+                    cantidad: cant,
+                    precio: prec,
+                    total: cant * prec
+                });
+            }
+        });
+
+        // PASO C: Guardar todos los detalles en un solo envío
+        if (detalles.length > 0) {
+            const resDetalle = await fetch(`${SB_URL}/detalle_notas`, {
+                method: 'POST',
+                headers: { ...headers },
+                body: JSON.stringify(detalles)
+            });
+
+            if (!resDetalle.ok) {
+                const errorDet = await resDetalle.json();
+                throw new Error("Error en detalles: " + errorDet.message);
+            }
+        }
+
+        alert("¡Venta guardada con éxito!");
+        location.reload();
+
+    } catch (error) {
+        console.error("Error completo:", error);
+        alert("Error: " + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "GENERAR PDF Y GUARDAR";
+    }
+}
+
+// Iniciar aplicación
 window.onload = init;
