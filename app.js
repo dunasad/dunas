@@ -252,30 +252,73 @@ function renderSelectors() {
 }
 
 function renderTablas() {
-    // ... dentro de renderTablas ...
-const tbodyCli = document.getElementById('tablaClientesBody');
-tbodyCli.innerHTML = appData.clientes.map(c => `
-    <tr>
-        <td class="px-4 fw-bold">${c.nombre}</td>
-        <td class="text-muted small">${c.destino || '-'}</td> <td class="text-muted small">${c.tel || '-'}</td>     <td class="text-end px-4">
-            <button class="btn btn-sm btn-light rounded-pill" onclick="abrirModalCliente('${c.id}')">
-                <i class="bi bi-pencil-square"></i>
-            </button>
-        </td>
-    </tr>
-`).join('');
+    // Tabla Clientes
+    const tbodyCli = document.getElementById('tablaClientesBody');
+    tbodyCli.innerHTML = appData.clientes.map(c => `
+        <tr>
+            <td class="px-4 fw-bold">${c.nombre}</td>
+            <td class="text-muted small">${c.ciudad || c.destino || '-'}</td>
+            <td class="text-muted small">${c.telefono || c.tel || '-'}</td>
+            <td class="text-end px-4">
+                <button class="btn btn-sm btn-light rounded-pill me-1" onclick="abrirModalCliente('${c.id}')">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="eliminarRegistro('clientes', '${c.id}', '${c.nombre}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
 
+    // Tabla Modelos
     const tbodyMod = document.getElementById('tablaModelosBody');
     tbodyMod.innerHTML = appData.modelos.map(m => `
         <tr>
             <td class="px-4 fw-bold">${m.nombre}</td>
             <td class="text-end px-4">
-                <button class="btn btn-sm btn-light rounded-pill" onclick="abrirModalModelo('${m.id}')">
+                <button class="btn btn-sm btn-light rounded-pill me-1" onclick="abrirModalModelo('${m.id}')">
                     <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="eliminarRegistro('modelos', '${m.id}', '${m.nombre}')">
+                    <i class="bi bi-trash"></i>
                 </button>
             </td>
         </tr>
     `).join('');
+}
+
+// --- FUNCIÓN PARA ELIMINAR ---
+async function eliminarRegistro(tabla, id, nombre) {
+    // Confirmación sencilla pero efectiva
+    if (!confirm(`¿Estás seguro de eliminar a "${nombre}"? Esta acción no se puede deshacer.`)) return;
+
+    try {
+        const res = await fetch(`${SB_URL}/${tabla}?id=eq.${id}`, {
+            method: 'DELETE',
+            headers
+        });
+
+        if (res.ok) {
+            notify("Registro eliminado con éxito", "bg-danger");
+            // Recargar datos según lo que se borró
+            if (tabla === 'clientes') {
+                await fetchClientes();
+                renderSelectors();
+            } else {
+                await fetchModelos();
+            }
+            renderTablas();
+        } else {
+            const err = await res.json();
+            if (err.code === "23503") {
+                notify("No se puede eliminar: tiene notas asociadas", "bg-warning");
+            } else {
+                throw new Error();
+            }
+        }
+    } catch (error) {
+        notify("Error al intentar eliminar", "bg-danger");
+    }
 }
 
 window.onload = init;
