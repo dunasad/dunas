@@ -1,133 +1,1192 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUNAS STUDIO - Panel</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #0d6efd; --sidebar-width: 250px; }
-        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; margin: 0; }
-        #login-screen { position: fixed; inset: 0; background: #f8f9fa; z-index: 10001; display: flex; align-items: center; justify-content: center; }
-        .login-card { width: 100%; max-width: 380px; padding: 2.5rem; border-radius: 1.5rem; background: white; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
-        .wrapper { display: flex; width: 100%; align-items: stretch; }
-        #sidebar { min-width: var(--sidebar-width); max-width: var(--sidebar-width); background: #212529; color: #fff; transition: all 0.3s; min-height: 100vh; display: flex; flex-direction: column; }
-        #sidebar.active { margin-left: calc(-1 * var(--sidebar-width)); }
-        #sidebar .sidebar-header { padding: 20px; text-align: center; background: #1a1d20; }
-        #sidebar ul li a { padding: 15px 20px; display: block; color: #adb5bd; text-decoration: none; display: flex; align-items: center; gap: 10px; }
-        #sidebar ul li.active > a, #sidebar ul li a:hover { color: #fff; background: var(--primary); }
-        #content { width: 100%; min-height: 100vh; }
-        .app-section { padding: 20px; }
-        .d-none { display: none !important; }
-        .logout-btn { margin-top: auto; padding: 20px; border-top: 1px solid #3d4145; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUNAS – Notas de Venta</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:       #1B2B5E;
+      --navy-deep:  #131f46;
+      --navy-light: #243572;
+      --red:        #C41E3A;
+      --red-dark:   #a01830;
+      --sky:        #e8edf8;
+      --bg:         #f2f4fb;
+      --white:      #ffffff;
+      --border:     #d8dff0;
+      --text:       #1B2B5E;
+      --muted:      #7282a8;
+      --success:    #15803d;
+      --success-bg: #dcfce7;
+      --danger:     #dc2626;
+      --danger-bg:  #fee2e2;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── NAVBAR ─────────────────────────────── */
+    .navbar {
+      background: var(--navy);
+      height: 68px;
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 4px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo { height: 42px; margin-right: 14px; object-fit: contain; }
+    .nav-brand { color: #fff; font-size: 1.05rem; font-weight: 800; letter-spacing: .03em; margin-right: 24px; }
+    .nav-sep { width: 1px; height: 28px; background: rgba(255,255,255,.15); margin: 0 8px; }
+
+    .nav-btn {
+      background: transparent; border: none;
+      color: rgba(255,255,255,.65);
+      padding: 8px 16px; border-radius: 8px;
+      cursor: pointer; font-size: .92rem; font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      transition: background .15s, color .15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .nav-btn.active { background: rgba(255,255,255,.12); color: #fff; border-bottom: 3px solid var(--red); }
+
+    .nav-spacer { flex: 1; }
+    .nav-config {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.75); padding: 7px 14px; border-radius: 8px;
+      cursor: pointer; font-size: .88rem; font-weight: 700;
+      font-family: 'Nunito', sans-serif; transition: all .15s;
+    }
+    .nav-config:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+    /* ── VIEWS ───────────────────────────────── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .main { padding: 32px 24px; max-width: 1080px; margin: 0 auto; }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .page-title { font-size: 1.6rem; font-weight: 800; color: var(--navy); }
+
+    /* ── CARDS ───────────────────────────────── */
+    .card {
+      background: var(--white); border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(27,43,94,.08);
+      overflow: hidden;
+    }
+    .card-body { padding: 28px; }
+
+    /* ── BUTTONS ─────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px; border-radius: 9px; border: none;
+      cursor: pointer; font-size: .9rem; font-weight: 700;
+      font-family: 'Nunito', sans-serif; transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-primary:hover { background: var(--navy-light); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-red { background: var(--red); color: #fff; }
+    .btn-red:hover { background: var(--red-dark); }
+    .btn-ghost {
+      background: transparent; color: var(--navy);
+      border: 1.5px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--sky); }
+    .btn-sm { padding: 6px 12px; font-size: .82rem; border-radius: 7px; }
+    .btn-add-product {
+      width: 100%; padding: 13px; border-radius: 10px;
+      border: 2px dashed #9eb0d8; background: #f5f7ff;
+      color: var(--navy-light); font-size: .95rem; font-weight: 700;
+      font-family: 'Nunito', sans-serif; cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-add-product:hover { background: var(--sky); border-color: var(--navy-light); }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--muted); font-size: .88rem; font-weight: 700;
+      cursor: pointer; background: none; border: none;
+      font-family: 'Nunito', sans-serif;
+      margin-bottom: 18px; padding: 0;
+      transition: color .15s;
+    }
+    .back-link:hover { color: var(--navy); }
+
+    /* ── TABLE ───────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: var(--navy); color: #fff;
+      padding: 12px 18px; text-align: left;
+      font-size: .8rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    tbody td {
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #f7f9ff; }
+
+    .empty-state {
+      text-align: center; padding: 56px 20px; color: var(--muted);
+    }
+    .empty-state .icon { font-size: 2.8rem; margin-bottom: 10px; }
+    .empty-state p { font-size: .95rem; }
+
+    /* ── FORM ────────────────────────────────── */
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block; font-size: .78rem; font-weight: 800;
+      color: var(--muted); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    input, select, textarea {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: .93rem; font-family: 'Nunito', sans-serif;
+      color: var(--text); background: #fff;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--navy);
+    }
+    input[readonly] {
+      background: var(--sky); font-weight: 800; color: var(--navy);
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+    /* ── ITEM ROW ────────────────────────────── */
+    .item-row {
+      background: #f7f9ff; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 18px; margin-bottom: 12px;
+      position: relative;
+    }
+    .item-row:hover { border-color: #9eb0d8; }
+    .item-num {
+      position: absolute; top: -10px; left: 16px;
+      background: var(--navy); color: #fff;
+      font-size: .72rem; font-weight: 900;
+      padding: 2px 10px; border-radius: 999px;
+      letter-spacing: .05em;
+    }
+    .btn-remove-item {
+      position: absolute; top: 12px; right: 12px;
+      background: var(--danger-bg); color: var(--danger);
+      border: none; border-radius: 7px; padding: 4px 10px;
+      cursor: pointer; font-size: .78rem; font-weight: 800;
+      font-family: 'Nunito', sans-serif; transition: background .15s;
+    }
+    .btn-remove-item:hover { background: #fecaca; }
+
+    /* ── TOTAL BAR ───────────────────────────── */
+    .total-bar {
+      background: var(--navy); color: #fff;
+      border-radius: 12px; padding: 18px 22px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 20px; font-size: 1.1rem; font-weight: 900;
+    }
+    .total-bar span:last-child { font-size: 1.4rem; }
+
+    .nota-actions {
+      display: flex; gap: 10px; margin-top: 24px;
+      padding-top: 22px; border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    /* ── FOLIO BADGE ─────────────────────────── */
+    .folio-badge {
+      display: inline-block; background: var(--sky); color: var(--navy);
+      font-weight: 900; padding: 3px 12px; border-radius: 6px;
+      font-size: .88rem; letter-spacing: .04em;
+    }
+
+    /* ── MODAL ───────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,20,60,.55); z-index: 500;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 18px; padding: 32px;
+      width: 100%; max-width: 500px;
+      box-shadow: 0 24px 64px rgba(10,20,60,.22);
+      animation: pop .2s ease;
+    }
+    .modal-lg { max-width: 680px; }
+    @keyframes pop {
+      from { transform: scale(.95); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+    .modal-title { font-size: 1.2rem; font-weight: 900; color: var(--navy); margin-bottom: 24px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+    /* ── TOAST ───────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      padding: 14px 20px; border-radius: 12px;
+      font-weight: 800; font-size: .9rem;
+      box-shadow: 0 6px 24px rgba(0,0,0,.2);
+      z-index: 9999; display: none;
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(16px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .toast-ok  { background: var(--success-bg); color: var(--success); }
+    .toast-err { background: var(--danger-bg);  color: var(--danger); }
+
+    /* ── LOADER ──────────────────────────────── */
+    .loader-wrap {
+      display: none; position: fixed; inset: 0;
+      background: rgba(255,255,255,.75); z-index: 9000;
+      align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+    }
+    .loader-wrap.on { display: flex; }
+    .spinner {
+      width: 42px; height: 42px;
+      border: 4px solid var(--border);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { font-size: .88rem; font-weight: 700; color: var(--muted); }
+
+    /* ── SQL BOX ─────────────────────────────── */
+    .sql-box {
+      background: #0f172a; color: #7dd3fc;
+      border-radius: 10px; padding: 16px; font-size: .78rem;
+      font-family: 'Courier New', monospace; max-height: 240px;
+      overflow-y: auto; white-space: pre; line-height: 1.6;
+      margin: 12px 0;
+    }
+    .info-box {
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 10px; padding: 14px 16px;
+      font-size: .83rem; color: #1e40af; line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    /* ─────────────────────────────────────────
+       PRINT VIEW
+    ───────────────────────────────────────── */
+    #print-view { display: none; }
+
+    @media print {
+      body > *:not(#print-view) { display: none !important; }
+      #print-view {
+        display: block !important;
+        font-family: Arial, sans-serif;
+        font-size: 11pt;
+        color: #000;
+      }
+      .no-print { display: none !important; }
+      @page { margin: 12mm; }
+    }
+
+    .pv-wrap {
+      max-width: 720px; margin: 0 auto;
+      border: 1.5px solid #222; padding: 22px 26px;
+    }
+    .pv-top {
+      display: flex; justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #222; padding-bottom: 14px; margin-bottom: 14px;
+    }
+    .pv-logo { height: 68px; object-fit: contain; }
+    .pv-title-block { text-align: right; }
+    .pv-title { font-size: 22pt; font-weight: 700; }
+    .pv-meta { font-size: 9.5pt; margin-top: 4px; line-height: 1.7; }
+    .pv-meta strong { font-weight: 700; }
+    .pv-client-table { width: 100%; margin-bottom: 12px; }
+    .pv-client-table td { padding: 2px 0; font-size: 10pt; }
+    .pv-client-table .lbl { font-weight: 700; width: 75px; }
+    .pv-work-header {
+      background: #2c4a7c; color: #fff;
+      text-align: center; padding: 6px 10px;
+      font-size: 9.5pt; font-weight: 700;
+    }
+    .pv-work-sub {
+      background: #d8edda; text-align: center;
+      padding: 4px 10px; font-size: 9pt;
+      margin-bottom: 12px;
+    }
+    .pv-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+    .pv-table th {
+      background: #2c4a7c; color: #fff;
+      padding: 7px 10px; text-align: left; font-size: 9pt;
+    }
+    .pv-table td { padding: 10px; border: 1px solid #ccc; font-size: 9.5pt; vertical-align: top; }
+    .pv-table .tc { text-align: center; }
+    .pv-table .tr { text-align: right; }
+    .pv-table .w-qty { width: 72px; }
+    .pv-table .w-price { width: 130px; }
+    .pv-table .w-total { width: 110px; }
+    .pv-total-row td {
+      font-weight: 700; border: none;
+      border-top: 2px solid #333; text-align: right; padding: 8px 10px;
+    }
+    .pv-address { text-align: center; font-size: 8.5pt; color: #555; padding-top: 8px; border-top: 1px solid #ccc; }
+    .pv-thanks { text-align: center; font-weight: 700; margin-top: 18px; font-size: 10pt; }
+  </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="login-card text-center">
-            <img src="logo.png" alt="DUNAS" width="120" class="mb-4 mx-auto d-block">
-            <h5 class="fw-bold mb-4">Acceso DUNAS</h5>
-            <input type="text" id="userInput" class="form-control mb-3 text-center rounded-3" placeholder="Usuario">
-            <input type="password" id="passInput" class="form-control mb-4 text-center rounded-3" placeholder="Contraseña">
-            <button class="btn btn-primary w-100 py-2 fw-bold rounded-pill" onclick="checkAccess()">ENTRAR</button>
+<!-- ═══════════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════════════ -->
+<nav class="navbar">
+  <img src="logo.png" class="nav-logo" alt="DUNAS" onerror="this.style.display='none'">
+  <span class="nav-brand">Notas de Venta</span>
+  <div class="nav-sep"></div>
+  <button class="nav-btn active" id="nav-notas"    onclick="gotoView('notas')">📋 Notas</button>
+  <button class="nav-btn"        id="nav-clientes" onclick="gotoView('clientes')">👥 Clientes</button>
+  <button class="nav-btn"        id="nav-modelos"  onclick="gotoView('modelos')">📦 Modelos</button>
+  <div class="nav-spacer"></div>
+  <button class="nav-config" onclick="abrirConfig()" title="Configuración Supabase">⚙️ Configurar</button>
+</nav>
+
+<!-- LOADER -->
+<div class="loader-wrap" id="loader">
+  <div class="spinner"></div>
+  <div class="loader-text">Cargando…</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- ── VIEW: NOTAS (lista) ──────────────── -->
+  <div class="view active" id="view-notas">
+    <div class="page-header">
+      <h1 class="page-title">📋 Notas de Venta</h1>
+      <button class="btn btn-primary" onclick="abrirNuevaNota()">＋ Nueva Nota</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>No. Pedido</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tb-notas">
+            <tr><td colspan="6"><div class="empty-state"><div class="icon">📋</div><p>Aún no hay notas registradas</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VIEW: FORMULARIO NOTA ─────────────── -->
+  <div class="view" id="view-nota-form">
+    <button class="back-link" onclick="gotoView('notas')">← Regresar a Notas</button>
+    <div class="page-header">
+      <h1 class="page-title" id="nota-form-titulo">Nueva Nota</h1>
+    </div>
+
+    <div class="card card-body">
+      <!-- Encabezado -->
+      <div class="grid-3" style="margin-bottom:16px">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Folio / N.º de Venta *</label>
+          <input type="text" id="nf-folio" placeholder="RAD04">
         </div>
-    </div>
-
-    <div class="wrapper d-none" id="main-app">
-        <nav id="sidebar">
-            <div class="sidebar-header"><img src="logo.png" width="100" style="filter: brightness(0) invert(1);"></div>
-            <ul class="list-unstyled components">
-                <li id="menu-notas" class="active" onclick="showSection('notas')"><a href="#"><i class="bi bi-file-earmark-plus"></i> Notas</a></li>
-                <li id="menu-historial" onclick="showSection('historial')"><a href="#"><i class="bi bi-clock-history"></i> Historial</a></li>
-                <li id="menu-clientes" onclick="showSection('clientes')"><a href="#"><i class="bi bi-people"></i> Clientes</a></li>
-                <li id="menu-modelos" onclick="showSection('modelos')"><a href="#"><i class="bi bi-box-seam"></i> Modelos</a></li>
-            </ul>
-            <div class="logout-btn">
-                <button class="btn btn-outline-danger btn-sm w-100 rounded-pill" onclick="logout()"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</button>
-            </div>
-        </nav>
-
-        <div id="content">
-            <nav class="navbar navbar-light bg-white shadow-sm px-4 py-3 mb-4">
-                <button type="button" onclick="document.getElementById('sidebar').classList.toggle('active')" class="btn btn-outline-primary border-0"><i class="bi bi-list fs-4"></i></button>
-                <h5 class="mb-0 fw-bold text-secondary" id="sectionTitle">Panel Control</h5>
-            </nav>
-
-            <div class="container-fluid">
-                <div id="sec-notas" class="app-section">
-                    <div class="card border-0 shadow-sm p-4 rounded-4">
-                        <label class="small fw-bold text-muted mb-2">CLIENTE</label>
-                        <select id="selCliente" class="form-select mb-4 border-0 bg-light py-2"></select>
-                        <div id="itemsContainer"></div>
-                        <button class="btn btn-outline-primary btn-sm w-100 mb-4 py-2 border-dashed" onclick="addItem()">+ Agregar Concepto</button>
-                        <div class="d-flex justify-content-between align-items-center border-top pt-4">
-                            <div><span class="text-muted small">Total</span><h3 class="fw-bold mb-0 text-primary">$<span id="totalTxt">0.00</span></h3></div>
-                            <button class="btn btn-primary px-5 py-3 rounded-pill fw-bold" onclick="guardarNota()">GUARDAR NOTA</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="sec-historial" class="app-section d-none">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light"><tr><th class="px-4">Fecha</th><th>Cliente</th><th>Total</th><th class="text-end px-4">Acciones</th></tr></thead>
-                            <tbody id="tablaHistorialBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="sec-clientes" class="app-section d-none">
-                    <div class="d-flex justify-content-between mb-4 align-items-center">
-                        <h4 class="fw-bold mb-0">Clientes</h4>
-                        <button class="btn btn-primary rounded-pill px-4" onclick="window.abrirModalCliente()">+ Nuevo Cliente</button>
-                    </div>
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <table class="table mb-0"><thead class="table-light"><tr><th class="px-4">Nombre</th><th>Teléfono</th><th class="text-end px-4">Acciones</th></tr></thead><tbody id="tablaClientesBody"></tbody></table>
-                    </div>
-                </div>
-
-                <div id="sec-modelos" class="app-section d-none">
-                    <div class="d-flex justify-content-between mb-4 align-items-center">
-                        <h4 class="fw-bold mb-0">Modelos</h4>
-                        <button class="btn btn-primary rounded-pill px-4" onclick="window.abrirModalModelo()">+ Nuevo Modelo</button>
-                    </div>
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <table class="table mb-0"><thead class="table-light"><tr><th class="px-4">Nombre</th><th class="text-end px-4">Acciones</th></tr></thead><tbody id="tablaModelosBody"></tbody></table>
-                    </div>
-                </div>
-            </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>No. Pedido</label>
+          <input type="text" id="nf-pedido" placeholder="1061">
         </div>
-    </div>
-
-    <div class="modal fade" id="modalEditarNota" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4">
-                <div class="modal-header border-0"><h5 class="fw-bold">Editar Detalle</h5></div>
-                <div class="modal-body">
-                    <input type="hidden" id="editNotaId">
-                    <div id="editItemsContainer"></div>
-                    <div class="d-flex justify-content-end mt-3"><h4 class="fw-bold text-primary">Total: $<span id="editTotalTxt">0.00</span></h4></div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
-                    <button class="btn btn-primary" onclick="actualizarNota()">Guardar Cambios</button>
-                </div>
-            </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Fecha *</label>
+          <input type="date" id="nf-fecha">
         </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="form-group" style="margin-bottom:0">
+          <label>Cliente *</label>
+          <select id="nf-cliente">
+            <option value="">— Selecciona un cliente —</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Trabajo / Descripción general</label>
+          <input type="text" id="nf-trabajo" placeholder="Fabricacion de palas tejidas">
+        </div>
+      </div>
+
+      <!-- Separador productos -->
+      <div style="display:flex; align-items:center; gap:12px; margin:24px 0 16px;">
+        <div style="flex:1; height:1px; background:var(--border)"></div>
+        <span style="font-size:.82rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;">Productos</span>
+        <div style="flex:1; height:1px; background:var(--border)"></div>
+      </div>
+
+      <div id="items-wrap"></div>
+      <button class="btn-add-product" onclick="agregarItem()">＋ Agregar producto</button>
+
+      <!-- Total -->
+      <div class="total-bar">
+        <span>TOTAL</span>
+        <span id="nf-total-display">$ 0.00</span>
+      </div>
+
+      <!-- Acciones -->
+      <div class="nota-actions">
+        <button class="btn btn-primary"  id="btn-guardar"  onclick="guardarNota()">💾 Guardar Nota</button>
+        <button class="btn btn-red"      id="btn-imprimir" onclick="imprimirNota()" style="display:none">🖨️ Imprimir</button>
+        <button class="btn btn-ghost"    onclick="gotoView('notas')">✕ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VIEW: CLIENTES ────────────────────── -->
+  <div class="view" id="view-clientes">
+    <div class="page-header">
+      <h1 class="page-title">👥 Clientes</h1>
+      <button class="btn btn-primary" onclick="abrirModalCliente()">＋ Nuevo Cliente</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Nombre</th><th>Ciudad</th><th>Teléfono</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tb-clientes">
+            <tr><td colspan="5"><div class="empty-state"><div class="icon">👥</div><p>No hay clientes registrados</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VIEW: MODELOS ─────────────────────── -->
+  <div class="view" id="view-modelos">
+    <div class="page-header">
+      <h1 class="page-title">📦 Modelos</h1>
+      <button class="btn btn-primary" onclick="abrirModalModelo()">＋ Nuevo Modelo</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Nombre del Modelo</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tb-modelos">
+            <tr><td colspan="3"><div class="empty-state"><div class="icon">📦</div><p>No hay modelos registrados</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ═══════════════════════════════════════════
+     MODALES
+══════════════════════════════════════════════ -->
+
+<!-- Modal: Cliente -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-title" id="modal-cliente-titulo">Nuevo Cliente</div>
+    <input type="hidden" id="mc-id">
+    <div class="form-group">
+      <label>Nombre *</label>
+      <input type="text" id="mc-nombre" placeholder="RADDOCK">
+    </div>
+    <div class="form-group">
+      <label>Ciudad</label>
+      <input type="text" id="mc-ciudad" placeholder="San Francisco del Rincon">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label>Teléfono</label>
+      <input type="text" id="mc-tel" placeholder="(476)737-9039">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Modelo -->
+<div class="modal-overlay" id="modal-modelo">
+  <div class="modal">
+    <div class="modal-title" id="modal-modelo-titulo">Nuevo Modelo</div>
+    <input type="hidden" id="mm-id">
+    <div class="form-group" style="margin-bottom:0">
+      <label>Nombre del Modelo *</label>
+      <input type="text" id="mm-nombre" placeholder="PALAS MODELO 3086">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-modelo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarModelo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Config -->
+<div class="modal-overlay" id="modal-config">
+  <div class="modal modal-lg">
+    <div class="modal-title">⚙️ Configuración de Supabase</div>
+
+    <div class="info-box">
+      📌 <strong>Primera vez:</strong> Copia el SQL de abajo, pégalo en el <strong>SQL Editor de Supabase</strong> y ejecútalo para crear las tablas. Luego llena tu URL y clave.
     </div>
 
-    <div class="modal fade" id="modalCliente" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4"><div class="modal-header border-0 pb-0"><h5>Cliente</h5></div><div class="modal-body"><input type="hidden" id="editCliId"><input type="text" id="nomCli" class="form-control mb-3" placeholder="Nombre"><input type="text" id="telCli" class="form-control" placeholder="Teléfono"></div><div class="modal-footer border-0"><button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="guardarCliente()">Guardar</button></div></div></div>
+    <details style="margin-bottom:16px">
+      <summary style="cursor:pointer; font-weight:800; font-size:.88rem; color:var(--navy); padding:8px 0">📋 Ver SQL para crear tablas en Supabase</summary>
+      <div class="sql-box" id="sql-box">-- 1. Clientes
+create table clientes (
+  id bigint generated always as identity primary key,
+  nombre text not null,
+  ciudad text,
+  telefono text,
+  created_at timestamptz default now()
+);
+
+-- 2. Modelos
+create table modelos (
+  id bigint generated always as identity primary key,
+  nombre text not null,
+  created_at timestamptz default now()
+);
+
+-- 3. Notas de venta
+create table notas (
+  id bigint generated always as identity primary key,
+  folio text not null,
+  pedido text,
+  fecha date not null,
+  cliente_id bigint references clientes(id),
+  trabajo text,
+  total numeric(12,2) default 0,
+  created_at timestamptz default now()
+);
+
+-- 4. Detalle de notas (productos)
+create table detalle_notas (
+  id bigint generated always as identity primary key,
+  nota_id bigint references notas(id) on delete cascade,
+  modelo_id bigint references modelos(id),
+  descripcion text,
+  cantidad integer default 1,
+  precio numeric(12,2) default 0,
+  total numeric(12,2) default 0,
+  created_at timestamptz default now()
+);</div>
+      <button class="btn btn-ghost" style="margin-top:8px; font-size:.8rem; padding:6px 14px" onclick="copiarSQL()">📋 Copiar SQL</button>
+    </details>
+
+    <div class="form-group">
+      <label>Supabase URL</label>
+      <input type="text" id="cfg-url" placeholder="https://xxxxxxxx.supabase.co">
     </div>
-    <div class="modal fade" id="modalModelo" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 rounded-4"><div class="modal-header border-0 pb-0"><h5>Modelo</h5></div><div class="modal-body"><input type="hidden" id="editModId"><input type="text" id="nomMod" class="form-control" placeholder="Nombre Modelo"></div><div class="modal-footer border-0"><button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" onclick="guardarModelo()">Guardar</button></div></div></div>
+    <div class="form-group">
+      <label>Supabase Anon Key</label>
+      <input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label>Dirección en pie de nota</label>
+      <input type="text" id="cfg-address" placeholder="CALLE MICHOACAN #647, COL. MODELO, MOROLEON, GTO.">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-config')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarConfig()">💾 Guardar y Conectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     VISTA DE IMPRESIÓN
+══════════════════════════════════════════════ -->
+<div id="print-view">
+  <div class="pv-wrap">
+    <div class="pv-top">
+      <img src="logo.png" class="pv-logo" alt="DUNAS" id="pv-logo">
+      <div class="pv-title-block">
+        <div class="pv-title">Nota de Venta</div>
+        <div class="pv-meta">
+          <strong>Fecha: </strong><span id="pv-fecha"></span><br>
+          <strong>No. Pedido</strong><span id="pv-pedido"></span><br>
+          <strong>N.º de Venta: </strong><span id="pv-folio"></span>
+        </div>
+      </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="app.js"></script>
+    <table class="pv-client-table">
+      <tr><td class="lbl">Cliente:</td><td id="pv-cliente"></td></tr>
+      <tr><td class="lbl">Ciudad:</td> <td id="pv-ciudad"></td></tr>
+      <tr><td class="lbl">Tel:</td>    <td id="pv-tel"></td></tr>
+    </table>
+
+    <div class="pv-work-header">Trabajo</div>
+    <div class="pv-work-sub" id="pv-trabajo"></div>
+
+    <table class="pv-table">
+      <thead>
+        <tr>
+          <th class="w-qty tc">Cantidad</th>
+          <th>Descripcion</th>
+          <th class="w-price tr">Precio por unidad</th>
+          <th class="w-total tr">Total</th>
+        </tr>
+      </thead>
+      <tbody id="pv-items"></tbody>
+      <tfoot>
+        <tr class="pv-total-row">
+          <td colspan="3">Total:</td>
+          <td>$ <span id="pv-total"></span></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="pv-address" id="pv-address">CALLE MICHOACAN #647, COL. MODELO, MOROLEON, GTO.</div>
+    <div class="pv-thanks">Gracias por su confianza.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════ -->
+<script>
+// ─── Supabase ───────────────────────────────
+const { createClient } = supabase;
+
+const SB_URL_DEFAULT = 'https://coywogyelfaspxlsctjv.supabase.co';
+const SB_KEY_DEFAULT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNveXdvZ3llbGZhc3B4bHNjdGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTkzMDksImV4cCI6MjA5MjYzNTMwOX0.BXT3hpn9CZevtc39KEVzkwyhjfCQ_087eyNp5UuFTS8';
+
+let SB = null;
+
+function initSB() {
+  const url = ls('sb_url') || SB_URL_DEFAULT;
+  const key = ls('sb_key') || SB_KEY_DEFAULT;
+  SB = createClient(url, key);
+  return true;
+}
+
+// ─── LocalStorage helpers ───────────────────
+function ls(k, v) {
+  if (v === undefined) return localStorage.getItem(k);
+  localStorage.setItem(k, v);
+}
+
+// ─── State ──────────────────────────────────
+let clientes = [], modelos = [], notas = [];
+let notaActualId = null;
+let itemSeq = 0;
+
+// ─── Config ─────────────────────────────────
+function abrirConfig() {
+  $('cfg-url').value     = ls('sb_url') || '';
+  $('cfg-key').value     = ls('sb_key') || '';
+  $('cfg-address').value = ls('cfg_address') || 'CALLE MICHOACAN #647, COL. MODELO, MOROLEON, GTO.';
+  abrirModal('modal-config');
+}
+
+function guardarConfig() {
+  const url  = $('cfg-url').value.trim();
+  const key  = $('cfg-key').value.trim();
+  const addr = $('cfg-address').value.trim();
+  if (!url || !key) { alert('Ingresa la URL y la Anon Key de Supabase'); return; }
+  ls('sb_url', url); ls('sb_key', key); ls('cfg_address', addr);
+  SB = createClient(url, key);
+  cerrarModal('modal-config');
+  toast('✅ Configuración guardada', 'ok');
+  cargarTodo();
+}
+
+function copiarSQL() {
+  navigator.clipboard.writeText($('sql-box').textContent)
+    .then(() => toast('📋 SQL copiado', 'ok'));
+}
+
+// ─── Carga datos ─────────────────────────────
+async function cargarTodo() {
+  if (!SB) { abrirConfig(); return; }
+  loader(true);
+  try {
+    const [rc, rm, rn] = await Promise.all([
+      SB.from('clientes').select('*').order('nombre'),
+      SB.from('modelos').select('*').order('nombre'),
+      SB.from('notas').select('id, folio, pedido, fecha, total, cliente_id, clientes(nombre)').order('created_at', { ascending: false })
+    ]);
+    clientes = rc.data || [];
+    modelos  = rm.data || [];
+    notas    = rn.data || [];
+    renderClientes(); renderModelos(); renderNotas();
+    poblarSelectCliente();
+  } catch(e) { toast('❌ Error al cargar: ' + e.message, 'err'); }
+  loader(false);
+}
+
+// ─── Vistas ──────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function gotoView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  $('view-' + name)?.classList.add('active');
+  $('nav-' + name)?.classList.add('active');
+  notaActualId = null;
+}
+
+// ─── NOTAS – lista ───────────────────────────
+function renderNotas() {
+  const tb = $('tb-notas');
+  if (!notas.length) {
+    tb.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="icon">📋</div><p>Aún no hay notas registradas</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = notas.map(n => `
+    <tr>
+      <td><span class="folio-badge">${n.folio || '—'}</span></td>
+      <td>${n.pedido || '—'}</td>
+      <td>${fmtFecha(n.fecha)}</td>
+      <td><strong>${n.clientes?.nombre || '—'}</strong></td>
+      <td><strong>$ ${fmtMoney(n.total || 0)}</strong></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="verNota(${n.id})">👁️ Ver</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarNota(${n.id})">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ─── NOTAS – nueva ──────────────────────────
+function abrirNuevaNota() {
+  notaActualId = null;
+  $('nota-form-titulo').textContent = 'Nueva Nota';
+  $('btn-guardar').style.display  = '';
+  $('btn-imprimir').style.display = 'none';
+
+  const hoy = new Date().toISOString().split('T')[0];
+  $('nf-fecha').value   = hoy;
+  $('nf-folio').value   = '';
+  $('nf-pedido').value  = '';
+  $('nf-trabajo').value = 'Fabricacion de palas tejidas';
+  $('nf-cliente').value = '';
+  $('items-wrap').innerHTML = '';
+  itemSeq = 0;
+  agregarItem();
+  calcTotal();
+
+  gotoViewRaw('nota-form');
+}
+
+function gotoViewRaw(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  $('view-' + name)?.classList.add('active');
+}
+
+// ─── NOTAS – ver/editar ──────────────────────
+async function verNota(id) {
+  loader(true);
+  const { data: nota } = await SB.from('notas').select('*, clientes(*)').eq('id', id).single();
+  const { data: det  } = await SB.from('detalle_notas').select('*, modelos(nombre)').eq('nota_id', id);
+  loader(false);
+  if (!nota) return;
+
+  notaActualId = id;
+  $('nota-form-titulo').textContent = `Nota: ${nota.folio}`;
+  $('btn-guardar').textContent = '💾 Guardar Cambios';
+  $('btn-guardar').style.display  = '';
+  $('btn-imprimir').style.display = '';
+
+  $('nf-folio').value   = nota.folio   || '';
+  $('nf-pedido').value  = nota.pedido  || '';
+  $('nf-fecha').value   = nota.fecha   || '';
+  $('nf-trabajo').value = nota.trabajo || '';
+  $('nf-cliente').value = nota.cliente_id || '';
+
+  $('items-wrap').innerHTML = '';
+  itemSeq = 0;
+  (det || []).forEach(d => {
+    agregarItemConDatos({
+      modelo_id: d.modelo_id,
+      descripcion: d.descripcion || '',
+      cantidad: d.cantidad,
+      precio: d.precio
+    });
+  });
+  calcTotal();
+  gotoViewRaw('nota-form');
+}
+
+// ─── ITEMS ───────────────────────────────────
+function agregarItem() {
+  agregarItemConDatos({ modelo_id: '', descripcion: '', cantidad: 1, precio: 0 });
+}
+
+function agregarItemConDatos({ modelo_id, descripcion, cantidad, precio }) {
+  itemSeq++;
+  const sid = `item-${itemSeq}`;
+  const opts = modelos.map(m =>
+    `<option value="${m.id}" ${m.id == modelo_id ? 'selected' : ''}>${m.nombre}</option>`
+  ).join('');
+
+  const html = `
+    <div class="item-row" id="${sid}">
+      <span class="item-num">PRODUCTO ${itemSeq}</span>
+      <button class="btn-remove-item" onclick="quitarItem('${sid}')">✕ Quitar</button>
+      <div style="margin-top:8px">
+        <div class="grid-2" style="margin-bottom:12px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Modelo</label>
+            <select class="item-modelo" onchange="calcTotal()">
+              <option value="">— Selecciona modelo —</option>
+              ${opts}
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Descripción (talla, color, pares, etc.)</label>
+            <input type="text" class="item-desc" placeholder="520 PARES NEGROS" value="${descripcion}">
+          </div>
+        </div>
+        <div class="grid-4">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Cantidad</label>
+            <input type="number" class="item-qty" min="0" value="${cantidad}" oninput="calcItemTotal('${sid}'); calcTotal()">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Precio por unidad</label>
+            <input type="number" class="item-price" min="0" step="0.01" value="${precio}" oninput="calcItemTotal('${sid}'); calcTotal()">
+          </div>
+          <div class="form-group" style="margin-bottom:0; grid-column: span 2">
+            <label>Subtotal</label>
+            <input type="text" class="item-total" readonly value="$ ${fmtMoney(cantidad * precio)}">
+          </div>
+        </div>
+      </div>
+    </div>`;
+  $('items-wrap').insertAdjacentHTML('beforeend', html);
+}
+
+function quitarItem(id) {
+  $(id)?.remove();
+  calcTotal();
+}
+
+function calcItemTotal(id) {
+  const row = $(id); if (!row) return 0;
+  const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
+  const price = parseFloat(row.querySelector('.item-price').value) || 0;
+  const sub   = qty * price;
+  row.querySelector('.item-total').value = '$ ' + fmtMoney(sub);
+  return sub;
+}
+
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    const qty   = parseFloat(row.querySelector('.item-qty')?.value)   || 0;
+    const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+    total += qty * price;
+  });
+  $('nf-total-display').textContent = '$ ' + fmtMoney(total);
+}
+
+function getItemsData() {
+  return Array.from(document.querySelectorAll('.item-row')).map(row => {
+    const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
+    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+    return {
+      modelo_id:   row.querySelector('.item-modelo').value || null,
+      descripcion: row.querySelector('.item-desc').value.trim(),
+      cantidad: qty, precio: price, total: qty * price
+    };
+  });
+}
+
+// ─── NOTAS – guardar ─────────────────────────
+async function guardarNota() {
+  const folio     = $('nf-folio').value.trim();
+  const pedido    = $('nf-pedido').value.trim();
+  const fecha     = $('nf-fecha').value;
+  const clienteId = $('nf-cliente').value;
+  const trabajo   = $('nf-trabajo').value.trim();
+  const items     = getItemsData();
+
+  if (!folio)     { alert('Ingresa el folio de la nota'); return; }
+  if (!fecha)     { alert('Selecciona la fecha'); return; }
+  if (!clienteId) { alert('Selecciona un cliente'); return; }
+  if (!items.length) { alert('Agrega al menos un producto'); return; }
+
+  const total = items.reduce((s, i) => s + i.total, 0);
+  loader(true);
+
+  try {
+    if (notaActualId) {
+      // UPDATE
+      await SB.from('notas').update({ folio, pedido, fecha, cliente_id: clienteId, trabajo, total }).eq('id', notaActualId);
+      await SB.from('detalle_notas').delete().eq('nota_id', notaActualId);
+      await SB.from('detalle_notas').insert(items.map(i => ({ ...i, nota_id: notaActualId })));
+    } else {
+      // INSERT
+      const { data: n, error } = await SB.from('notas').insert({ folio, pedido, fecha, cliente_id: clienteId, trabajo, total }).select().single();
+      if (error) throw error;
+      notaActualId = n.id;
+      await SB.from('detalle_notas').insert(items.map(i => ({ ...i, nota_id: n.id })));
+    }
+
+    $('nota-form-titulo').textContent = `Nota: ${folio}`;
+    $('btn-guardar').textContent = '💾 Guardar Cambios';
+    $('btn-imprimir').style.display = '';
+    await cargarTodo();
+    toast('✅ Nota guardada correctamente', 'ok');
+  } catch(e) {
+    toast('❌ Error: ' + e.message, 'err');
+  }
+  loader(false);
+}
+
+async function eliminarNota(id) {
+  if (!confirm('¿Eliminar esta nota? Esta acción no se puede deshacer.')) return;
+  loader(true);
+  await SB.from('detalle_notas').delete().eq('nota_id', id);
+  await SB.from('notas').delete().eq('id', id);
+  await cargarTodo();
+  toast('🗑️ Nota eliminada', 'ok');
+  loader(false);
+}
+
+// ─── IMPRIMIR ────────────────────────────────
+async function imprimirNota() {
+  if (!notaActualId) return;
+  loader(true);
+  const { data: nota } = await SB.from('notas').select('*, clientes(*)').eq('id', notaActualId).single();
+  const { data: det  } = await SB.from('detalle_notas').select('*, modelos(nombre)').eq('nota_id', notaActualId);
+  loader(false);
+
+  $('pv-fecha').textContent   = fmtFecha(nota.fecha);
+  $('pv-pedido').textContent  = nota.pedido ? nota.pedido : '';
+  $('pv-folio').textContent   = nota.folio  || '';
+  $('pv-cliente').textContent = nota.clientes?.nombre   || '';
+  $('pv-ciudad').textContent  = nota.clientes?.ciudad   || '';
+  $('pv-tel').textContent     = nota.clientes?.telefono || '';
+  $('pv-trabajo').textContent = nota.trabajo || '';
+  $('pv-total').textContent   = fmtMoney(nota.total || 0);
+  $('pv-address').textContent = ls('cfg_address') || 'CALLE MICHOACAN #647, COL. MODELO, MOROLEON, GTO.';
+
+  $('pv-items').innerHTML = (det || []).map(d => `
+    <tr>
+      <td class="tc w-qty">${d.cantidad}</td>
+      <td>
+        <strong>${d.modelos?.nombre || ''}</strong>
+        ${d.descripcion ? '<br>' + d.descripcion : ''}
+      </td>
+      <td class="tr w-price">$ ${fmtMoney(d.precio)}</td>
+      <td class="tr w-total">$ ${fmtMoney(d.total)}</td>
+    </tr>
+  `).join('');
+
+  window.print();
+}
+
+// ─── CLIENTES ────────────────────────────────
+function renderClientes() {
+  const tb = $('tb-clientes');
+  if (!clientes.length) {
+    tb.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="icon">👥</div><p>No hay clientes registrados</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = clientes.map((c, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${c.nombre}</strong></td>
+      <td>${c.ciudad || '—'}</td>
+      <td>${c.telefono || '—'}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="editarCliente(${c.id})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarCliente(${c.id})">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function poblarSelectCliente() {
+  const sel = $('nf-cliente'), val = sel.value;
+  sel.innerHTML = '<option value="">— Selecciona un cliente —</option>' +
+    clientes.map(c => `<option value="${c.id}">${c.nombre}${c.ciudad ? ' – '+c.ciudad : ''}</option>`).join('');
+  sel.value = val;
+}
+
+function abrirModalCliente(id) {
+  $('mc-id').value     = '';
+  $('mc-nombre').value = '';
+  $('mc-ciudad').value = '';
+  $('mc-tel').value    = '';
+  $('modal-cliente-titulo').textContent = 'Nuevo Cliente';
+  if (id) {
+    const c = clientes.find(x => x.id === id);
+    if (c) {
+      $('mc-id').value     = c.id;
+      $('mc-nombre').value = c.nombre;
+      $('mc-ciudad').value = c.ciudad   || '';
+      $('mc-tel').value    = c.telefono || '';
+      $('modal-cliente-titulo').textContent = 'Editar Cliente';
+    }
+  }
+  abrirModal('modal-cliente');
+}
+function editarCliente(id) { abrirModalCliente(id); }
+
+async function guardarCliente() {
+  const nombre = $('mc-nombre').value.trim();
+  if (!nombre) { alert('El nombre es requerido'); return; }
+  const id   = $('mc-id').value;
+  const data = { nombre: nombre.toUpperCase(), ciudad: $('mc-ciudad').value.trim(), telefono: $('mc-tel').value.trim() };
+  loader(true);
+  if (id) await SB.from('clientes').update(data).eq('id', id);
+  else    await SB.from('clientes').insert(data);
+  cerrarModal('modal-cliente');
+  await cargarTodo();
+  toast('✅ Cliente guardado', 'ok');
+  loader(false);
+}
+
+async function eliminarCliente(id) {
+  if (!confirm('¿Eliminar este cliente?')) return;
+  loader(true);
+  await SB.from('clientes').delete().eq('id', id);
+  await cargarTodo();
+  toast('🗑️ Cliente eliminado', 'ok');
+  loader(false);
+}
+
+// ─── MODELOS ─────────────────────────────────
+function renderModelos() {
+  const tb = $('tb-modelos');
+  if (!modelos.length) {
+    tb.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="icon">📦</div><p>No hay modelos registrados</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = modelos.map((m, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${m.nombre}</strong></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="editarModelo(${m.id})">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarModelo(${m.id})">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function abrirModalModelo(id) {
+  $('mm-id').value     = '';
+  $('mm-nombre').value = '';
+  $('modal-modelo-titulo').textContent = 'Nuevo Modelo';
+  if (id) {
+    const m = modelos.find(x => x.id === id);
+    if (m) {
+      $('mm-id').value     = m.id;
+      $('mm-nombre').value = m.nombre;
+      $('modal-modelo-titulo').textContent = 'Editar Modelo';
+    }
+  }
+  abrirModal('modal-modelo');
+}
+function editarModelo(id) { abrirModalModelo(id); }
+
+async function guardarModelo() {
+  const nombre = $('mm-nombre').value.trim();
+  if (!nombre) { alert('El nombre del modelo es requerido'); return; }
+  const id = $('mm-id').value;
+  const data = { nombre: nombre.toUpperCase() };
+  loader(true);
+  if (id) await SB.from('modelos').update(data).eq('id', id);
+  else    await SB.from('modelos').insert(data);
+  cerrarModal('modal-modelo');
+  await cargarTodo();
+  toast('✅ Modelo guardado', 'ok');
+  loader(false);
+}
+
+async function eliminarModelo(id) {
+  if (!confirm('¿Eliminar este modelo?')) return;
+  loader(true);
+  await SB.from('modelos').delete().eq('id', id);
+  await cargarTodo();
+  toast('🗑️ Modelo eliminado', 'ok');
+  loader(false);
+}
+
+// ─── UTILIDADES ──────────────────────────────
+function abrirModal(id) { $(id).classList.add('open'); }
+function cerrarModal(id) { $(id).classList.remove('open'); }
+
+function loader(on) { $('loader').classList.toggle('on', on); }
+
+let toastTimer;
+function toast(msg, tipo = 'ok') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `toast toast-${tipo}`;
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+function fmtMoney(n) {
+  return parseFloat(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtFecha(d) {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+// Cerrar modal al click fuera
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ─── INIT ────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (initSB()) { cargarTodo(); }
+  else { abrirConfig(); }
+});
+</script>
 </body>
 </html>
