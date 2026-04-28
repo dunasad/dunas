@@ -38,6 +38,30 @@
       line-height: 1.5;
     }
 
+    /* ── LOGIN VIEW ─────────────────────────── */
+    #view-login {
+      display: none;
+      height: 100vh;
+      align-items: center;
+      justify-content: center;
+      background: var(--navy);
+    }
+    #view-login.active { display: flex; }
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .login-logo { height: 60px; margin-bottom: 20px; }
+
+    /* ── APP WRAPPER ────────────────────────── */
+    #app-content { display: none; }
+    #app-content.active { display: block; }
+
     /* ── NAVBAR ─────────────────────────────── */
     .navbar {
       background: var(--navy);
@@ -68,13 +92,15 @@
     .nav-btn.active { background: rgba(255,255,255,.12); color: #fff; border-bottom: 3px solid var(--red); }
 
     .nav-spacer { flex: 1; }
-    .nav-config {
+    .nav-config, .nav-logout {
       background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
       color: rgba(255,255,255,.75); padding: 7px 14px; border-radius: 8px;
       cursor: pointer; font-size: .88rem; font-weight: 700;
       font-family: 'Nunito', sans-serif; transition: all .15s;
+      margin-left: 8px;
     }
-    .nav-config:hover { background: rgba(255,255,255,.15); color: #fff; }
+    .nav-config:hover, .nav-logout:hover { background: rgba(255,255,255,.15); color: #fff; }
+    .nav-logout:hover { background: var(--red); border-color: var(--red); }
 
     /* ── VIEWS ───────────────────────────────── */
     .view { display: none; }
@@ -360,833 +386,95 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════
-     NAVBAR
-══════════════════════════════════════════════ -->
-<nav class="navbar">
-  <img src="logo.png" class="nav-logo" alt="DUNAS" onerror="this.style.display='none'">
-  <span class="nav-brand">Notas de Venta</span>
-  <div class="nav-sep"></div>
-  <button class="nav-btn active" id="nav-notas"    onclick="gotoView('notas')">📋 Notas</button>
-  <button class="nav-btn"        id="nav-clientes" onclick="gotoView('clientes')">👥 Clientes</button>
-  <button class="nav-btn"        id="nav-modelos"  onclick="gotoView('modelos')">📦 Modelos</button>
-  <div class="nav-spacer"></div>
-  <button class="nav-config" onclick="abrirConfig()" title="Configuración Supabase">⚙️ Configurar</button>
-</nav>
-
-<!-- LOADER -->
-<div class="loader-wrap" id="loader">
-  <div class="spinner"></div>
-  <div class="loader-text">Cargando…</div>
+<div id="view-login">
+  <div class="login-card">
+    <img src="logo.png" class="login-logo" alt="DUNAS" onerror="this.style.display='none'">
+    <h2 style="color: var(--navy); margin-bottom: 24px; font-weight: 900;">Iniciar Sesión</h2>
+    <div class="form-group" style="text-align: left;">
+      <label>Correo Electrónico</label>
+      <input type="email" id="login-email" placeholder="tu@email.com">
+    </div>
+    <div class="form-group" style="text-align: left;">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="handleLogin()">Entrar al Sistema</button>
+  </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div id="app-content">
+  <nav class="navbar">
+    <img src="logo.png" class="nav-logo" alt="DUNAS" onerror="this.style.display='none'">
+    <span class="nav-brand">Notas de Venta</span>
+    <div class="nav-sep"></div>
+    <button class="nav-btn active" id="nav-notas"    onclick="gotoView('notas')">📋 Notas</button>
+    <button class="nav-btn"        id="nav-clientes" onclick="gotoView('clientes')">👥 Clientes</button>
+    <button class="nav-btn"        id="nav-modelos"  onclick="gotoView('modelos')">📦 Modelos</button>
+    <div class="nav-spacer"></div>
+    <button class="nav-config" onclick="abrirConfig()" title="Configuración">⚙️</button>
+    <button class="nav-logout" onclick="handleLogout()" title="Cerrar Sesión">Sair 🚪</button>
+  </nav>
 
-<!-- ═══════════════════════════════════════════
-     MAIN
-══════════════════════════════════════════════ -->
-<div class="main">
-
-  <!-- ── VIEW: NOTAS (lista) ──────────────── -->
-  <div class="view active" id="view-notas">
-    <div class="page-header">
-      <h1 class="page-title">📋 Notas de Venta</h1>
-      <button class="btn btn-primary" onclick="abrirNuevaNota()">＋ Nueva Nota</button>
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Folio</th>
-              <th>No. Pedido</th>
-              <th>Fecha</th>
-              <th>Cliente</th>
-              <th>Total</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tb-notas">
-            <tr><td colspan="6"><div class="empty-state"><div class="icon">📋</div><p>Aún no hay notas registradas</p></div></td></tr>
-          </tbody>
-        </table>
+  <div class="main">
+    <div class="view active" id="view-notas">
+      <div class="page-header">
+        <h1 class="page-title">📋 Notas de Venta</h1>
+        <button class="btn btn-primary" onclick="abrirNuevaNota()">＋ Nueva Nota</button>
       </div>
-    </div>
-  </div>
-
-  <!-- ── VIEW: FORMULARIO NOTA ─────────────── -->
-  <div class="view" id="view-nota-form">
-    <button class="back-link" onclick="gotoView('notas')">← Regresar a Notas</button>
-    <div class="page-header">
-      <h1 class="page-title" id="nota-form-titulo">Nueva Nota</h1>
-    </div>
-
-    <div class="card card-body">
-      <!-- Encabezado -->
-      <div class="grid-3" style="margin-bottom:16px">
-        <div class="form-group" style="margin-bottom:0">
-          <label>Folio / N.º de Venta *</label>
-          <input type="text" id="nf-folio" placeholder="RAD04">
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label>No. Pedido</label>
-          <input type="text" id="nf-pedido" placeholder="1061">
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label>Fecha *</label>
-          <input type="date" id="nf-fecha">
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Folio</th><th>No. Pedido</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tb-notas"></tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-      <div class="grid-2" style="margin-bottom:16px">
-        <div class="form-group" style="margin-bottom:0">
-          <label>Cliente *</label>
-          <select id="nf-cliente">
-            <option value="">— Selecciona un cliente —</option>
-          </select>
+    <div class="view" id="view-nota-form">
+      <button class="back-link" onclick="gotoView('notas')">← Regresar a Notas</button>
+      <div class="page-header"><h1 class="page-title" id="nota-form-titulo">Nueva Nota</h1></div>
+      <div class="card card-body">
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="form-group"><label>Folio / N.º de Venta *</label><input type="text" id="nf-folio" placeholder="RAD04"></div>
+          <div class="form-group"><label>No. Pedido</label><input type="text" id="nf-pedido" placeholder="1061"></div>
+          <div class="form-group"><label>Fecha *</label><input type="date" id="nf-fecha"></div>
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label>Trabajo / Descripción general</label>
-          <input type="text" id="nf-trabajo" placeholder="Fabricacion de palas tejidas">
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="form-group"><label>Cliente *</label><select id="nf-cliente"></select></div>
+          <div class="form-group"><label>Trabajo</label><input type="text" id="nf-trabajo"></div>
+        </div>
+        <div id="items-wrap"></div>
+        <button class="btn-add-product" onclick="agregarItem()">＋ Agregar producto</button>
+        <div class="total-bar"><span>TOTAL</span><span id="nf-total-display">$ 0.00</span></div>
+        <div class="nota-actions">
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardarNota()">💾 Guardar Nota</button>
+          <button class="btn btn-red" id="btn-imprimir" onclick="imprimirNota()" style="display:none">🖨️ Imprimir</button>
+          <button class="btn btn-ghost" onclick="gotoView('notas')">✕ Cancelar</button>
         </div>
       </div>
+    </div>
 
-      <!-- Separador productos -->
-      <div style="display:flex; align-items:center; gap:12px; margin:24px 0 16px;">
-        <div style="flex:1; height:1px; background:var(--border)"></div>
-        <span style="font-size:.82rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;">Productos</span>
-        <div style="flex:1; height:1px; background:var(--border)"></div>
+    <div class="view" id="view-clientes">
+      <div class="page-header">
+        <h1 class="page-title">👥 Clientes</h1>
+        <button class="btn btn-primary" onclick="abrirModalCliente()">＋ Nuevo Cliente</button>
       </div>
+      <div class="card"><div class="table-wrap"><table><thead><tr><th>#</th><th>Nombre</th><th>Ciudad</th><th>Teléfono</th><th>Acciones</th></tr></thead><tbody id="tb-clientes"></tbody></table></div></div>
+    </div>
 
-      <div id="items-wrap"></div>
-      <button class="btn-add-product" onclick="agregarItem()">＋ Agregar producto</button>
-
-      <!-- Total -->
-      <div class="total-bar">
-        <span>TOTAL</span>
-        <span id="nf-total-display">$ 0.00</span>
+    <div class="view" id="view-modelos">
+      <div class="page-header">
+        <h1 class="page-title">📦 Modelos</h1>
+        <button class="btn btn-primary" onclick="abrirModalModelo()">＋ Nuevo Modelo</button>
       </div>
-
-      <!-- Acciones -->
-      <div class="nota-actions">
-        <button class="btn btn-primary"  id="btn-guardar"  onclick="guardarNota()">💾 Guardar Nota</button>
-        <button class="btn btn-red"      id="btn-imprimir" onclick="imprimirNota()" style="display:none">🖨️ Imprimir</button>
-        <button class="btn btn-ghost"    onclick="gotoView('notas')">✕ Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── VIEW: CLIENTES ────────────────────── -->
-  <div class="view" id="view-clientes">
-    <div class="page-header">
-      <h1 class="page-title">👥 Clientes</h1>
-      <button class="btn btn-primary" onclick="abrirModalCliente()">＋ Nuevo Cliente</button>
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>#</th><th>Nombre</th><th>Ciudad</th><th>Teléfono</th><th>Acciones</th></tr>
-          </thead>
-          <tbody id="tb-clientes">
-            <tr><td colspan="5"><div class="empty-state"><div class="icon">👥</div><p>No hay clientes registrados</p></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── VIEW: MODELOS ─────────────────────── -->
-  <div class="view" id="view-modelos">
-    <div class="page-header">
-      <h1 class="page-title">📦 Modelos</h1>
-      <button class="btn btn-primary" onclick="abrirModalModelo()">＋ Nuevo Modelo</button>
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>#</th><th>Nombre del Modelo</th><th>Acciones</th></tr>
-          </thead>
-          <tbody id="tb-modelos">
-            <tr><td colspan="3"><div class="empty-state"><div class="icon">📦</div><p>No hay modelos registrados</p></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /main -->
-
-<!-- ═══════════════════════════════════════════
-     MODALES
-══════════════════════════════════════════════ -->
-
-<!-- Modal: Cliente -->
-<div class="modal-overlay" id="modal-cliente">
-  <div class="modal">
-    <div class="modal-title" id="modal-cliente-titulo">Nuevo Cliente</div>
-    <input type="hidden" id="mc-id">
-    <div class="form-group">
-      <label>Nombre *</label>
-      <input type="text" id="mc-nombre" placeholder="RADDOCK">
-    </div>
-    <div class="form-group">
-      <label>Ciudad</label>
-      <input type="text" id="mc-ciudad" placeholder="San Francisco del Rincon">
-    </div>
-    <div class="form-group" style="margin-bottom:0">
-      <label>Teléfono</label>
-      <input type="text" id="mc-tel" placeholder="(476)737-9039">
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="cerrarModal('modal-cliente')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
+      <div class="card"><div class="table-wrap"><table><thead><tr><th>#</th><th>Modelo</th><th>Acciones</th></tr></thead><tbody id="tb-modelos"></tbody></table></div></div>
     </div>
   </div>
 </div>
 
-<!-- Modal: Modelo -->
-<div class="modal-overlay" id="modal-modelo">
-  <div class="modal">
-    <div class="modal-title" id="modal-modelo-titulo">Nuevo Modelo</div>
-    <input type="hidden" id="mm-id">
-    <div class="form-group" style="margin-bottom:0">
-      <label>Nombre del Modelo *</label>
-      <input type="text" id="mm-nombre" placeholder="PALAS MODELO 3086">
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="cerrarModal('modal-modelo')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarModelo()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Config -->
-<div class="modal-overlay" id="modal-config">
-  <div class="modal modal-lg">
-    <div class="modal-title">⚙️ Configuración de Supabase</div>
-
-    <div class="info-box">
-      📌 <strong>Primera vez:</strong> Copia el SQL de abajo, pégalo en el <strong>SQL Editor de Supabase</strong> y ejecútalo para crear las tablas. Luego llena tu URL y clave.
-    </div>
-
-    <details style="margin-bottom:16px">
-      <summary style="cursor:pointer; font-weight:800; font-size:.88rem; color:var(--navy); padding:8px 0">📋 Ver SQL para crear tablas en Supabase</summary>
-      <div class="sql-box" id="sql-box">-- 1. Clientes
-create table clientes (
-  id bigint generated always as identity primary key,
-  nombre text not null,
-  ciudad text,
-  telefono text,
-  created_at timestamptz default now()
-);
-
--- 2. Modelos
-create table modelos (
-  id bigint generated always as identity primary key,
-  nombre text not null,
-  created_at timestamptz default now()
-);
-
--- 3. Notas de venta
-create table notas (
-  id bigint generated always as identity primary key,
-  folio text not null,
-  pedido text,
-  fecha date not null,
-  cliente_id bigint references clientes(id),
-  trabajo text,
-  total numeric(12,2) default 0,
-  created_at timestamptz default now()
-);
-
--- 4. Detalle de notas (productos)
-create table detalle_notas (
-  id bigint generated always as identity primary key,
-  nota_id bigint references notas(id) on delete cascade,
-  modelo_id bigint references modelos(id),
-  descripcion text,
-  cantidad integer default 1,
-  precio numeric(12,2) default 0,
-  total numeric(12,2) default 0,
-  created_at timestamptz default now()
-);</div>
-      <button class="btn btn-ghost" style="margin-top:8px; font-size:.8rem; padding:6px 14px" onclick="copiarSQL()">📋 Copiar SQL</button>
-    </details>
-
-    <div class="form-group">
-      <label>Supabase URL</label>
-      <input type="text" id="cfg-url" placeholder="https://xxxxxxxx.supabase.co">
-    </div>
-    <div class="form-group">
-      <label>Supabase Anon Key</label>
-      <input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-    </div>
-    <div class="form-group" style="margin-bottom:0">
-      <label>Dirección en pie de nota</label>
-      <input type="text" id="cfg-address" placeholder="CALLE MICHOACAN #647, COL. MODELO, MOROLEON, GTO.">
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="cerrarModal('modal-config')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarConfig()">💾 Guardar y Conectar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     VISTA DE IMPRESIÓN
-══════════════════════════════════════════════ -->
-<div id="print-view">
-  <div class="pv-wrap">
-    <div class="pv-top">
-      <img src="logo.png" class="pv-logo" alt="DUNAS" id="pv-logo">
-      <div class="pv-title-block">
-        <div class="pv-title">Nota de Venta</div>
-        <div class="pv-meta">
-          <strong>Fecha: </strong><span id="pv-fecha"></span><br>
-          <strong>No. Pedido</strong><span id="pv-pedido"></span><br>
-          <strong>N.º de Venta: </strong><span id="pv-folio"></span>
-        </div>
-      </div>
-    </div>
-
-    <table class="pv-client-table">
-      <tr><td class="lbl">Cliente:</td><td id="pv-cliente"></td></tr>
-      <tr><td class="lbl">Ciudad:</td> <td id="pv-ciudad"></td></tr>
-      <tr><td class="lbl">Tel:</td>    <td id="pv-tel"></td></tr>
-    </table>
-
-    <div class="pv-work-header">Trabajo</div>
-    <div class="pv-work-sub" id="pv-trabajo"></div>
-
-    <table class="pv-table">
-      <thead>
-        <tr>
-          <th class="w-qty tc">Cantidad</th>
-          <th>Descripcion</th>
-          <th class="w-price tr">Precio por unidad</th>
-          <th class="w-total tr">Total</th>
-        </tr>
-      </thead>
-      <tbody id="pv-items"></tbody>
-      <tfoot>
-        <tr class="pv-total-row">
-          <td colspan="3">Total:</td>
-          <td>$ <span id="pv-total"></span></td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <div class="pv-address" id="pv-address">CALLE MICHOACAN #647, COL. MODELO, MOROLEON, GTO.</div>
-    <div class="pv-thanks">Gracias por su confianza.</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════════════ -->
-<script>
-// ─── Supabase ───────────────────────────────
-const { createClient } = supabase;
-
-const SB_URL_DEFAULT = 'https://coywogyelfaspxlsctjv.supabase.co';
-const SB_KEY_DEFAULT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNveXdvZ3llbGZhc3B4bHNjdGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTkzMDksImV4cCI6MjA5MjYzNTMwOX0.BXT3hpn9CZevtc39KEVzkwyhjfCQ_087eyNp5UuFTS8';
-
-let SB = null;
-
-function initSB() {
-  const url = ls('sb_url') || SB_URL_DEFAULT;
-  const key = ls('sb_key') || SB_KEY_DEFAULT;
-  SB = createClient(url, key);
-  return true;
-}
-
-// ─── LocalStorage helpers ───────────────────
-function ls(k, v) {
-  if (v === undefined) return localStorage.getItem(k);
-  localStorage.setItem(k, v);
-}
-
-// ─── State ──────────────────────────────────
-let clientes = [], modelos = [], notas = [];
-let notaActualId = null;
-let itemSeq = 0;
-
-// ─── Config ─────────────────────────────────
-function abrirConfig() {
-  $('cfg-url').value     = ls('sb_url') || '';
-  $('cfg-key').value     = ls('sb_key') || '';
-  $('cfg-address').value = ls('cfg_address') || 'CALLE MICHOACAN #647, COL. MODELO, MOROLEON, GTO.';
-  abrirModal('modal-config');
-}
-
-function guardarConfig() {
-  const url  = $('cfg-url').value.trim();
-  const key  = $('cfg-key').value.trim();
-  const addr = $('cfg-address').value.trim();
-  if (!url || !key) { alert('Ingresa la URL y la Anon Key de Supabase'); return; }
-  ls('sb_url', url); ls('sb_key', key); ls('cfg_address', addr);
-  SB = createClient(url, key);
-  cerrarModal('modal-config');
-  toast('✅ Configuración guardada', 'ok');
-  cargarTodo();
-}
-
-function copiarSQL() {
-  navigator.clipboard.writeText($('sql-box').textContent)
-    .then(() => toast('📋 SQL copiado', 'ok'));
-}
-
-// ─── Carga datos ─────────────────────────────
-async function cargarTodo() {
-  if (!SB) { abrirConfig(); return; }
-  loader(true);
-  try {
-    const [rc, rm, rn] = await Promise.all([
-      SB.from('clientes').select('*').order('nombre'),
-      SB.from('modelos').select('*').order('nombre'),
-      SB.from('notas').select('id, folio, pedido, fecha, total, cliente_id, clientes(nombre)').order('created_at', { ascending: false })
-    ]);
-    clientes = rc.data || [];
-    modelos  = rm.data || [];
-    notas    = rn.data || [];
-    renderClientes(); renderModelos(); renderNotas();
-    poblarSelectCliente();
-  } catch(e) { toast('❌ Error al cargar: ' + e.message, 'err'); }
-  loader(false);
-}
-
-// ─── Vistas ──────────────────────────────────
-function $(id) { return document.getElementById(id); }
-
-function gotoView(name) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  $('view-' + name)?.classList.add('active');
-  $('nav-' + name)?.classList.add('active');
-  notaActualId = null;
-}
-
-// ─── NOTAS – lista ───────────────────────────
-function renderNotas() {
-  const tb = $('tb-notas');
-  if (!notas.length) {
-    tb.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="icon">📋</div><p>Aún no hay notas registradas</p></div></td></tr>';
-    return;
-  }
-  tb.innerHTML = notas.map(n => `
-    <tr>
-      <td><span class="folio-badge">${n.folio || '—'}</span></td>
-      <td>${n.pedido || '—'}</td>
-      <td>${fmtFecha(n.fecha)}</td>
-      <td><strong>${n.clientes?.nombre || '—'}</strong></td>
-      <td><strong>$ ${fmtMoney(n.total || 0)}</strong></td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="verNota(${n.id})">👁️ Ver</button>
-        <button class="btn btn-danger btn-sm" onclick="eliminarNota(${n.id})">🗑️</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-// ─── NOTAS – nueva ──────────────────────────
-function abrirNuevaNota() {
-  notaActualId = null;
-  $('nota-form-titulo').textContent = 'Nueva Nota';
-  $('btn-guardar').style.display  = '';
-  $('btn-imprimir').style.display = 'none';
-
-  const hoy = new Date().toISOString().split('T')[0];
-  $('nf-fecha').value   = hoy;
-  $('nf-folio').value   = '';
-  $('nf-pedido').value  = '';
-  $('nf-trabajo').value = 'Fabricacion de palas tejidas';
-  $('nf-cliente').value = '';
-  $('items-wrap').innerHTML = '';
-  itemSeq = 0;
-  agregarItem();
-  calcTotal();
-
-  gotoViewRaw('nota-form');
-}
-
-function gotoViewRaw(name) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  $('view-' + name)?.classList.add('active');
-}
-
-// ─── NOTAS – ver/editar ──────────────────────
-async function verNota(id) {
-  loader(true);
-  const { data: nota } = await SB.from('notas').select('*, clientes(*)').eq('id', id).single();
-  const { data: det  } = await SB.from('detalle_notas').select('*, modelos(nombre)').eq('nota_id', id);
-  loader(false);
-  if (!nota) return;
-
-  notaActualId = id;
-  $('nota-form-titulo').textContent = `Nota: ${nota.folio}`;
-  $('btn-guardar').textContent = '💾 Guardar Cambios';
-  $('btn-guardar').style.display  = '';
-  $('btn-imprimir').style.display = '';
-
-  $('nf-folio').value   = nota.folio   || '';
-  $('nf-pedido').value  = nota.pedido  || '';
-  $('nf-fecha').value   = nota.fecha   || '';
-  $('nf-trabajo').value = nota.trabajo || '';
-  $('nf-cliente').value = nota.cliente_id || '';
-
-  $('items-wrap').innerHTML = '';
-  itemSeq = 0;
-  (det || []).forEach(d => {
-    agregarItemConDatos({
-      modelo_id: d.modelo_id,
-      descripcion: d.descripcion || '',
-      cantidad: d.cantidad,
-      precio: d.precio
-    });
-  });
-  calcTotal();
-  gotoViewRaw('nota-form');
-}
-
-// ─── ITEMS ───────────────────────────────────
-function agregarItem() {
-  agregarItemConDatos({ modelo_id: '', descripcion: '', cantidad: 1, precio: 0 });
-}
-
-function agregarItemConDatos({ modelo_id, descripcion, cantidad, precio }) {
-  itemSeq++;
-  const sid = `item-${itemSeq}`;
-  const opts = modelos.map(m =>
-    `<option value="${m.id}" ${m.id == modelo_id ? 'selected' : ''}>${m.nombre}</option>`
-  ).join('');
-
-  const html = `
-    <div class="item-row" id="${sid}">
-      <span class="item-num">PRODUCTO ${itemSeq}</span>
-      <button class="btn-remove-item" onclick="quitarItem('${sid}')">✕ Quitar</button>
-      <div style="margin-top:8px">
-        <div class="grid-2" style="margin-bottom:12px">
-          <div class="form-group" style="margin-bottom:0">
-            <label>Modelo</label>
-            <select class="item-modelo" onchange="calcTotal()">
-              <option value="">— Selecciona modelo —</option>
-              ${opts}
-            </select>
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label>Descripción (talla, color, pares, etc.)</label>
-            <input type="text" class="item-desc" placeholder="520 PARES NEGROS" value="${descripcion}">
-          </div>
-        </div>
-        <div class="grid-4">
-          <div class="form-group" style="margin-bottom:0">
-            <label>Cantidad</label>
-            <input type="number" class="item-qty" min="0" value="${cantidad}" oninput="calcItemTotal('${sid}'); calcTotal()">
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label>Precio por unidad</label>
-            <input type="number" class="item-price" min="0" step="0.01" value="${precio}" oninput="calcItemTotal('${sid}'); calcTotal()">
-          </div>
-          <div class="form-group" style="margin-bottom:0; grid-column: span 2">
-            <label>Subtotal</label>
-            <input type="text" class="item-total" readonly value="$ ${fmtMoney(cantidad * precio)}">
-          </div>
-        </div>
-      </div>
-    </div>`;
-  $('items-wrap').insertAdjacentHTML('beforeend', html);
-}
-
-function quitarItem(id) {
-  $(id)?.remove();
-  calcTotal();
-}
-
-function calcItemTotal(id) {
-  const row = $(id); if (!row) return 0;
-  const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
-  const price = parseFloat(row.querySelector('.item-price').value) || 0;
-  const sub   = qty * price;
-  row.querySelector('.item-total').value = '$ ' + fmtMoney(sub);
-  return sub;
-}
-
-function calcTotal() {
-  let total = 0;
-  document.querySelectorAll('.item-row').forEach(row => {
-    const qty   = parseFloat(row.querySelector('.item-qty')?.value)   || 0;
-    const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
-    total += qty * price;
-  });
-  $('nf-total-display').textContent = '$ ' + fmtMoney(total);
-}
-
-function getItemsData() {
-  return Array.from(document.querySelectorAll('.item-row')).map(row => {
-    const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
-    const price = parseFloat(row.querySelector('.item-price').value) || 0;
-    return {
-      modelo_id:   row.querySelector('.item-modelo').value || null,
-      descripcion: row.querySelector('.item-desc').value.trim(),
-      cantidad: qty, precio: price, total: qty * price
-    };
-  });
-}
-
-// ─── NOTAS – guardar ─────────────────────────
-async function guardarNota() {
-  const folio     = $('nf-folio').value.trim();
-  const pedido    = $('nf-pedido').value.trim();
-  const fecha     = $('nf-fecha').value;
-  const clienteId = $('nf-cliente').value;
-  const trabajo   = $('nf-trabajo').value.trim();
-  const items     = getItemsData();
-
-  if (!folio)     { alert('Ingresa el folio de la nota'); return; }
-  if (!fecha)     { alert('Selecciona la fecha'); return; }
-  if (!clienteId) { alert('Selecciona un cliente'); return; }
-  if (!items.length) { alert('Agrega al menos un producto'); return; }
-
-  const total = items.reduce((s, i) => s + i.total, 0);
-  loader(true);
-
-  try {
-    if (notaActualId) {
-      // UPDATE
-      await SB.from('notas').update({ folio, pedido, fecha, cliente_id: clienteId, trabajo, total }).eq('id', notaActualId);
-      await SB.from('detalle_notas').delete().eq('nota_id', notaActualId);
-      await SB.from('detalle_notas').insert(items.map(i => ({ ...i, nota_id: notaActualId })));
-    } else {
-      // INSERT
-      const { data: n, error } = await SB.from('notas').insert({ folio, pedido, fecha, cliente_id: clienteId, trabajo, total }).select().single();
-      if (error) throw error;
-      notaActualId = n.id;
-      await SB.from('detalle_notas').insert(items.map(i => ({ ...i, nota_id: n.id })));
-    }
-
-    $('nota-form-titulo').textContent = `Nota: ${folio}`;
-    $('btn-guardar').textContent = '💾 Guardar Cambios';
-    $('btn-imprimir').style.display = '';
-    await cargarTodo();
-    toast('✅ Nota guardada correctamente', 'ok');
-  } catch(e) {
-    toast('❌ Error: ' + e.message, 'err');
-  }
-  loader(false);
-}
-
-async function eliminarNota(id) {
-  if (!confirm('¿Eliminar esta nota? Esta acción no se puede deshacer.')) return;
-  loader(true);
-  await SB.from('detalle_notas').delete().eq('nota_id', id);
-  await SB.from('notas').delete().eq('id', id);
-  await cargarTodo();
-  toast('🗑️ Nota eliminada', 'ok');
-  loader(false);
-}
-
-// ─── IMPRIMIR ────────────────────────────────
-async function imprimirNota() {
-  if (!notaActualId) return;
-  loader(true);
-  const { data: nota } = await SB.from('notas').select('*, clientes(*)').eq('id', notaActualId).single();
-  const { data: det  } = await SB.from('detalle_notas').select('*, modelos(nombre)').eq('nota_id', notaActualId);
-  loader(false);
-
-  $('pv-fecha').textContent   = fmtFecha(nota.fecha);
-  $('pv-pedido').textContent  = nota.pedido ? nota.pedido : '';
-  $('pv-folio').textContent   = nota.folio  || '';
-  $('pv-cliente').textContent = nota.clientes?.nombre   || '';
-  $('pv-ciudad').textContent  = nota.clientes?.ciudad   || '';
-  $('pv-tel').textContent     = nota.clientes?.telefono || '';
-  $('pv-trabajo').textContent = nota.trabajo || '';
-  $('pv-total').textContent   = fmtMoney(nota.total || 0);
-  $('pv-address').textContent = ls('cfg_address') || 'CALLE MICHOACAN #647, COL. MODELO, MOROLEON, GTO.';
-
-  $('pv-items').innerHTML = (det || []).map(d => `
-    <tr>
-      <td class="tc w-qty">${d.cantidad}</td>
-      <td>
-        <strong>${d.modelos?.nombre || ''}</strong>
-        ${d.descripcion ? '<br>' + d.descripcion : ''}
-      </td>
-      <td class="tr w-price">$ ${fmtMoney(d.precio)}</td>
-      <td class="tr w-total">$ ${fmtMoney(d.total)}</td>
-    </tr>
-  `).join('');
-
-  window.print();
-}
-
-// ─── CLIENTES ────────────────────────────────
-function renderClientes() {
-  const tb = $('tb-clientes');
-  if (!clientes.length) {
-    tb.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="icon">👥</div><p>No hay clientes registrados</p></div></td></tr>';
-    return;
-  }
-  tb.innerHTML = clientes.map((c, i) => `
-    <tr>
-      <td>${i+1}</td>
-      <td><strong>${c.nombre}</strong></td>
-      <td>${c.ciudad || '—'}</td>
-      <td>${c.telefono || '—'}</td>
-      <td style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-sm" onclick="editarCliente(${c.id})">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="eliminarCliente(${c.id})">🗑️</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function poblarSelectCliente() {
-  const sel = $('nf-cliente'), val = sel.value;
-  sel.innerHTML = '<option value="">— Selecciona un cliente —</option>' +
-    clientes.map(c => `<option value="${c.id}">${c.nombre}${c.ciudad ? ' – '+c.ciudad : ''}</option>`).join('');
-  sel.value = val;
-}
-
-function abrirModalCliente(id) {
-  $('mc-id').value     = '';
-  $('mc-nombre').value = '';
-  $('mc-ciudad').value = '';
-  $('mc-tel').value    = '';
-  $('modal-cliente-titulo').textContent = 'Nuevo Cliente';
-  if (id) {
-    const c = clientes.find(x => x.id === id);
-    if (c) {
-      $('mc-id').value     = c.id;
-      $('mc-nombre').value = c.nombre;
-      $('mc-ciudad').value = c.ciudad   || '';
-      $('mc-tel').value    = c.telefono || '';
-      $('modal-cliente-titulo').textContent = 'Editar Cliente';
-    }
-  }
-  abrirModal('modal-cliente');
-}
-function editarCliente(id) { abrirModalCliente(id); }
-
-async function guardarCliente() {
-  const nombre = $('mc-nombre').value.trim();
-  if (!nombre) { alert('El nombre es requerido'); return; }
-  const id   = $('mc-id').value;
-  const data = { nombre: nombre.toUpperCase(), ciudad: $('mc-ciudad').value.trim(), telefono: $('mc-tel').value.trim() };
-  loader(true);
-  if (id) await SB.from('clientes').update(data).eq('id', id);
-  else    await SB.from('clientes').insert(data);
-  cerrarModal('modal-cliente');
-  await cargarTodo();
-  toast('✅ Cliente guardado', 'ok');
-  loader(false);
-}
-
-async function eliminarCliente(id) {
-  if (!confirm('¿Eliminar este cliente?')) return;
-  loader(true);
-  await SB.from('clientes').delete().eq('id', id);
-  await cargarTodo();
-  toast('🗑️ Cliente eliminado', 'ok');
-  loader(false);
-}
-
-// ─── MODELOS ─────────────────────────────────
-function renderModelos() {
-  const tb = $('tb-modelos');
-  if (!modelos.length) {
-    tb.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="icon">📦</div><p>No hay modelos registrados</p></div></td></tr>';
-    return;
-  }
-  tb.innerHTML = modelos.map((m, i) => `
-    <tr>
-      <td>${i+1}</td>
-      <td><strong>${m.nombre}</strong></td>
-      <td style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-sm" onclick="editarModelo(${m.id})">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="eliminarModelo(${m.id})">🗑️</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function abrirModalModelo(id) {
-  $('mm-id').value     = '';
-  $('mm-nombre').value = '';
-  $('modal-modelo-titulo').textContent = 'Nuevo Modelo';
-  if (id) {
-    const m = modelos.find(x => x.id === id);
-    if (m) {
-      $('mm-id').value     = m.id;
-      $('mm-nombre').value = m.nombre;
-      $('modal-modelo-titulo').textContent = 'Editar Modelo';
-    }
-  }
-  abrirModal('modal-modelo');
-}
-function editarModelo(id) { abrirModalModelo(id); }
-
-async function guardarModelo() {
-  const nombre = $('mm-nombre').value.trim();
-  if (!nombre) { alert('El nombre del modelo es requerido'); return; }
-  const id = $('mm-id').value;
-  const data = { nombre: nombre.toUpperCase() };
-  loader(true);
-  if (id) await SB.from('modelos').update(data).eq('id', id);
-  else    await SB.from('modelos').insert(data);
-  cerrarModal('modal-modelo');
-  await cargarTodo();
-  toast('✅ Modelo guardado', 'ok');
-  loader(false);
-}
-
-async function eliminarModelo(id) {
-  if (!confirm('¿Eliminar este modelo?')) return;
-  loader(true);
-  await SB.from('modelos').delete().eq('id', id);
-  await cargarTodo();
-  toast('🗑️ Modelo eliminado', 'ok');
-  loader(false);
-}
-
-// ─── UTILIDADES ──────────────────────────────
-function abrirModal(id) { $(id).classList.add('open'); }
-function cerrarModal(id) { $(id).classList.remove('open'); }
-
-function loader(on) { $('loader').classList.toggle('on', on); }
-
-let toastTimer;
-function toast(msg, tipo = 'ok') {
-  const el = $('toast');
-  el.textContent = msg;
-  el.className = `toast toast-${tipo}`;
-  el.style.display = 'block';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3500);
-}
-
-function fmtMoney(n) {
-  return parseFloat(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function fmtFecha(d) {
-  if (!d) return '—';
-  const [y, m, day] = d.split('-');
-  return `${day}/${m}/${y}`;
-}
-
-// Cerrar modal al click fuera
-document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
-});
-
-// ─── INIT ────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  if (initSB()) { cargarTodo(); }
-  else { abrirConfig(); }
-});
-</script>
-</body>
-</html>
+<div class="modal-overlay" id="modal-cliente"><div class="modal"><div class="modal-title" id="modal-cliente-titulo">Nuevo Cliente</div><input type="hidden" id="mc-id"><div class="form-group"><label>Nombre *</label><input type="text" id="mc-nombre"></div><div class="form-group"><label>Ciudad</label><input type="text" id="mc-ciudad"></div><div class="form-group"><label>Teléfono</label><input type="text" id="mc-tel"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="cerrarModal('modal-cliente')">Cancelar</button><button class="btn btn-primary" onclick="guardarCliente()">Guardar</button></div></div></div>
+<div class="modal-overlay" id="modal-modelo"><div class="modal"><div class="modal-title" id="modal-modelo-titulo">Nuevo Modelo</div><input type="hidden" id="mm-id"><div class="form-group"><label>Nombre del Modelo *</label><input type="text" id="mm-nombre"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="cerrarModal('modal-modelo')">Cancelar</button><button class="btn btn-primary" onclick="guardarModelo()">Guardar</button></div></div></div>
+<div class="modal-overlay" id="modal-config"><div class="modal modal-lg"><div class="modal-title">⚙️ Configuración</div><div class="form-group"><label>Supabase URL</label><input type="text" id="cfg-url"></div><div class="form-group"><label
