@@ -133,51 +133,52 @@
 
     /* ── NAVBAR ─────────────────────────────── */
     .navbar {
-      background: var(--navy); height: 68px;
+      background: #f0f2f7; height: 68px;
       display: flex; align-items: center;
       padding: 0 28px; gap: 4px;
-      box-shadow: 0 2px 12px rgba(240,240,240);
+      box-shadow: 0 2px 10px rgba(27,43,94,.12);
+      border-bottom: 1px solid #dde2ef;
       position: sticky; top: 0; z-index: 100;
     }
     .nav-logo { height: 42px; margin-right: 14px; object-fit: contain; }
-    .nav-brand { color: #f0f0f0; font-size: 1.05rem; font-weight: 800; letter-spacing: .03em; margin-right: 20px; }
-    .nav-sep   { width: 1px; height: 28px; background: rgba(255,255,255,.15); margin: 0 6px; }
+    .nav-brand { color: var(--navy); font-size: 1.05rem; font-weight: 900; letter-spacing: .02em; margin-right: 20px; }
+    .nav-sep   { width: 1px; height: 28px; background: #cdd4e8; margin: 0 6px; }
 
     .nav-btn {
       background: transparent; border: none;
-      color: rgba(255,255,255,.65);
+      color: var(--muted);
       padding: 8px 16px; border-radius: 8px;
       cursor: pointer; font-size: .92rem; font-weight: 700;
       font-family: 'Nunito', sans-serif;
       transition: background .15s, color .15s;
       display: flex; align-items: center; gap: 6px;
     }
-    .nav-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .nav-btn:hover { background: #e2e6f3; color: var(--navy); }
     .nav-btn.active {
-      background: rgba(255,255,255,.12); color: #fff;
+      background: #dde3f5; color: var(--navy);
       border-bottom: 3px solid var(--red);
     }
 
     .nav-spacer { flex: 1; }
     .nav-user   { display: flex; align-items: center; gap: 10px; }
     .nav-user-name {
-      color: rgba(255,255,255,.75); font-size: .85rem; font-weight: 700;
+      color: var(--navy); font-size: .85rem; font-weight: 700;
     }
     .nav-user-avatar {
-      width: 34px; height: 34px; background: var(--red);
+      width: 34px; height: 34px; background: var(--navy);
       border-radius: 50%; display: flex; align-items: center;
       justify-content: center; color: #fff;
       font-size: .85rem; font-weight: 900;
     }
     .btn-logout {
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.15);
-      color: rgba(255,255,255,.65);
+      background: transparent;
+      border: 1.5px solid #cdd4e8;
+      color: var(--muted);
       padding: 7px 14px; border-radius: 8px;
       cursor: pointer; font-size: .82rem; font-weight: 700;
       font-family: 'Nunito', sans-serif; transition: all .15s;
     }
-    .btn-logout:hover { background: rgba(196,30,58,.4); color: #fff; border-color: var(--red); }
+    .btn-logout:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
 
     /* ── VIEWS ──────────────────────────────── */
     .view { display: none; }
@@ -436,12 +437,12 @@
 
     .pv-work-header {
       background: #2c4a7c !important; color: #fff !important;
-      text-align: center; padding: 6px 10px;
+      text-align: left; padding: 6px 12px;
       font-size: 9.5pt; font-weight: 700;
     }
     .pv-work-sub {
       background: #d8edda !important;
-      text-align: center; padding: 4px 10px;
+      text-align: left; padding: 5px 12px;
       font-size: 9pt; margin-bottom: 14px;
     }
 
@@ -706,7 +707,8 @@
     </div>
     <div class="form-group" style="margin-bottom:0">
       <label>Teléfono</label>
-      <input type="text" id="mc-tel" placeholder="(476)737-9039">
+      <input type="text" id="mc-tel" placeholder="(476)737-9039"
+        oninput="fmtTelefono(this)" maxlength="13">
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost"   onclick="cerrarModal('modal-cliente')">Cancelar</button>
