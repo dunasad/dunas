@@ -47,6 +47,23 @@ function fmtFecha(d) {
   return `${day}/${m}/${y}`;
 }
 
+// Formatea el campo teléfono en tiempo real → (123)456-7890
+function fmtTelefono(input) {
+  // Solo dígitos
+  let digits = input.value.replace(/\D/g, '').slice(0, 10);
+  let result = '';
+  if (digits.length === 0) {
+    result = '';
+  } else if (digits.length <= 3) {
+    result = `(${digits}`;
+  } else if (digits.length <= 6) {
+    result = `(${digits.slice(0, 3)})${digits.slice(3)}`;
+  } else {
+    result = `(${digits.slice(0, 3)})${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  input.value = result;
+}
+
 // ════════════════════════════════════════════
 //  SESIÓN  (sessionStorage → dura hasta cerrar pestaña)
 // ════════════════════════════════════════════
@@ -547,7 +564,12 @@ function abrirModalCliente(id) {
       $('mc-id').value     = c.id;
       $('mc-nombre').value = c.nombre;
       $('mc-ciudad').value = c.ciudad   || '';
-      $('mc-tel').value    = c.telefono || '';
+      // Aplicar formato al teléfono guardado
+      $('mc-tel').value = '';
+      if (c.telefono) {
+        $('mc-tel').value = c.telefono;
+        fmtTelefono($('mc-tel'));
+      }
       $('modal-cliente-titulo').textContent = 'Editar Cliente';
     }
   }
