@@ -201,9 +201,50 @@ function renderNotas() {
 }
 
 // ════════════════════════════════════════════
+//  AUTONUMERACIÓN
+// ════════════════════════════════════════════
+async function generarNumeros() {
+  // Folio: DUN00300, DUN00301, DUN00302 …
+  // Pedido: 001110, 001111, 001112 …
+  const FOLIO_INICIO  = 300;   // DUN00300
+  const PEDIDO_INICIO = 1110;  // 001110
+
+  try {
+    const { data } = await SB
+      .from('notas')
+      .select('folio, pedido')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let nextFolio  = 'DUN' + String(FOLIO_INICIO).padStart(5, '0');
+    let nextPedido = String(PEDIDO_INICIO).padStart(6, '0');
+
+    if (data) {
+      // Folio: extraer número de "DUN00300"
+      const fm = data.folio?.match(/DUN0*(\d+)/i);
+      if (fm) {
+        nextFolio = 'DUN' + String(parseInt(fm[1]) + 1).padStart(5, '0');
+      }
+      // Pedido: extraer número
+      const pm = data.pedido?.match(/(\d+)/);
+      if (pm) {
+        nextPedido = String(parseInt(pm[1]) + 1).padStart(6, '0');
+      }
+    }
+    return { folio: nextFolio, pedido: nextPedido };
+  } catch {
+    return {
+      folio:  'DUN' + String(FOLIO_INICIO).padStart(5, '0'),
+      pedido: String(PEDIDO_INICIO).padStart(6, '0'),
+    };
+  }
+}
+
+// ════════════════════════════════════════════
 //  NOTAS – Nueva
 // ════════════════════════════════════════════
-function abrirNuevaNota() {
+async function abrirNuevaNota() {
   notaActualId = null;
   $('nota-form-titulo').textContent = 'Nueva Nota';
   $('btn-guardar').textContent      = '💾 Guardar Nota';
@@ -211,8 +252,8 @@ function abrirNuevaNota() {
   $('btn-imprimir').style.display   = 'none';
 
   $('nf-fecha').value   = new Date().toISOString().split('T')[0];
-  $('nf-folio').value   = '';
-  $('nf-pedido').value  = '';
+  $('nf-folio').value   = '…';
+  $('nf-pedido').value  = '…';
   $('nf-trabajo').value = 'Fabricacion de palas tejidas';
   $('nf-cliente').value = '';
   $('items-wrap').innerHTML = '';
@@ -220,6 +261,11 @@ function abrirNuevaNota() {
   agregarItem();
   calcTotal();
   gotoViewRaw('nota-form');
+
+  // Generar números después de mostrar la vista
+  const nums = await generarNumeros();
+  $('nf-folio').value  = nums.folio;
+  $('nf-pedido').value = nums.pedido;
 }
 
 // ════════════════════════════════════════════
