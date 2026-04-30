@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -38,46 +39,109 @@
       line-height: 1.5;
     }
 
-    /* ── LOGIN VIEW ─────────────────────────── */
-    #view-login {
+    /* ══════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════ */
+    #login-screen {
       display: none;
-      height: 100vh;
+      position: fixed; inset: 0;
+      background: var(--navy);
+      z-index: 9999;
       align-items: center;
       justify-content: center;
-      background: var(--navy);
+      flex-direction: column;
+      padding: 20px;
     }
-    #view-login.active { display: flex; }
-    .login-card {
-      background: white;
-      padding: 40px;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-      text-align: center;
-    }
-    .login-logo { height: 60px; margin-bottom: 20px; }
+    #login-screen.visible { display: flex; }
 
-    /* ── APP WRAPPER ────────────────────────── */
-    #app-content { display: none; }
-    #app-content.active { display: block; }
+    .login-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 44px 40px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 32px 80px rgba(0,0,0,.35);
+      animation: pop .3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-deco {
+      position: absolute; border-radius: 50%; pointer-events: none;
+    }
+    .login-deco-1 {
+      width: 240px; height: 240px;
+      background: rgba(196,30,58,.07);
+      top: -80px; right: -60px;
+    }
+    .login-deco-2 {
+      width: 160px; height: 160px;
+      background: rgba(27,43,94,.05);
+      bottom: -40px; left: -40px;
+    }
+
+    .login-logo-wrap { text-align: center; margin-bottom: 28px; }
+    .login-logo { height: 68px; object-fit: contain; display: block; margin: 0 auto 8px; }
+    .login-logo-fallback {
+      font-size: 2rem; font-weight: 900;
+      color: var(--navy); letter-spacing: .06em;
+    }
+    .login-subtitle {
+      font-size: .78rem; color: var(--muted); font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1em; margin-top: 4px;
+    }
+
+    .login-title {
+      font-size: 1.3rem; font-weight: 900;
+      color: var(--navy); text-align: center; margin-bottom: 22px;
+    }
+    .login-fg { margin-bottom: 16px; }
+    .login-fg label {
+      display: block; font-size: .74rem; font-weight: 800;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: .07em; margin-bottom: 7px;
+    }
+    .login-fg input {
+      width: 100%; padding: 13px 16px;
+      border: 2px solid var(--border); border-radius: 10px;
+      font-size: .97rem; font-family: 'Nunito', sans-serif;
+      color: var(--text); transition: border-color .2s;
+    }
+    .login-fg input:focus { outline: none; border-color: var(--navy); }
+
+    .login-error {
+      background: var(--danger-bg); color: var(--danger);
+      border-radius: 9px; padding: 10px 14px;
+      font-size: .83rem; font-weight: 700;
+      margin-bottom: 14px; display: none;
+    }
+    .login-error.visible { display: block; }
+
+    .btn-login {
+      width: 100%; padding: 14px;
+      background: var(--navy); color: #fff;
+      border: none; border-radius: 11px;
+      font-size: 1rem; font-weight: 900;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer; margin-top: 4px;
+      transition: background .15s; letter-spacing: .02em;
+    }
+    .btn-login:hover    { background: var(--navy-light); }
+    .btn-login:disabled { opacity: .55; cursor: default; }
+
+    /* ── APP wrapper ──────────────────────── */
+    #app { display: none; }
+    #app.visible { display: block; }
 
     /* ── NAVBAR ─────────────────────────────── */
     .navbar {
-      background: var(--navy);
-      height: 68px;
-      display: flex;
-      align-items: center;
-      padding: 0 28px;
-      gap: 4px;
+      background: var(--navy); height: 68px;
+      display: flex; align-items: center;
+      padding: 0 28px; gap: 4px;
       box-shadow: 0 2px 12px rgba(0,0,0,.3);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      position: sticky; top: 0; z-index: 100;
     }
     .nav-logo { height: 42px; margin-right: 14px; object-fit: contain; }
-    .nav-brand { color: #fff; font-size: 1.05rem; font-weight: 800; letter-spacing: .03em; margin-right: 24px; }
-    .nav-sep { width: 1px; height: 28px; background: rgba(255,255,255,.15); margin: 0 8px; }
+    .nav-brand { color: #fff; font-size: 1.05rem; font-weight: 800; letter-spacing: .03em; margin-right: 20px; }
+    .nav-sep   { width: 1px; height: 28px; background: rgba(255,255,255,.15); margin: 0 6px; }
 
     .nav-btn {
       background: transparent; border: none;
@@ -89,23 +153,35 @@
       display: flex; align-items: center; gap: 6px;
     }
     .nav-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
-    .nav-btn.active { background: rgba(255,255,255,.12); color: #fff; border-bottom: 3px solid var(--red); }
+    .nav-btn.active {
+      background: rgba(255,255,255,.12); color: #fff;
+      border-bottom: 3px solid var(--red);
+    }
 
     .nav-spacer { flex: 1; }
-    .nav-config, .nav-logout {
-      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
-      color: rgba(255,255,255,.75); padding: 7px 14px; border-radius: 8px;
-      cursor: pointer; font-size: .88rem; font-weight: 700;
-      font-family: 'Nunito', sans-serif; transition: all .15s;
-      margin-left: 8px;
+    .nav-user   { display: flex; align-items: center; gap: 10px; }
+    .nav-user-name {
+      color: rgba(255,255,255,.75); font-size: .85rem; font-weight: 700;
     }
-    .nav-config:hover, .nav-logout:hover { background: rgba(255,255,255,.15); color: #fff; }
-    .nav-logout:hover { background: var(--red); border-color: var(--red); }
+    .nav-user-avatar {
+      width: 34px; height: 34px; background: var(--red);
+      border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; color: #fff;
+      font-size: .85rem; font-weight: 900;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.65);
+      padding: 7px 14px; border-radius: 8px;
+      cursor: pointer; font-size: .82rem; font-weight: 700;
+      font-family: 'Nunito', sans-serif; transition: all .15s;
+    }
+    .btn-logout:hover { background: rgba(196,30,58,.4); color: #fff; border-color: var(--red); }
 
-    /* ── VIEWS ───────────────────────────────── */
+    /* ── VIEWS ──────────────────────────────── */
     .view { display: none; }
     .view.active { display: block; }
-
     .main { padding: 32px 24px; max-width: 1080px; margin: 0 auto; }
 
     .page-header {
@@ -114,11 +190,10 @@
     }
     .page-title { font-size: 1.6rem; font-weight: 800; color: var(--navy); }
 
-    /* ── CARDS ───────────────────────────────── */
+    /* ── CARD ───────────────────────────────── */
     .card {
       background: var(--white); border-radius: 14px;
-      box-shadow: 0 1px 6px rgba(27,43,94,.08);
-      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(27,43,94,.08); overflow: hidden;
     }
     .card-body { padding: 28px; }
 
@@ -132,9 +207,9 @@
     }
     .btn-primary { background: var(--navy); color: #fff; }
     .btn-primary:hover { background: var(--navy-light); }
-    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger  { background: var(--danger); color: #fff; }
     .btn-danger:hover { background: #b91c1c; }
-    .btn-red { background: var(--red); color: #fff; }
+    .btn-red     { background: var(--red); color: #fff; }
     .btn-red:hover { background: var(--red-dark); }
     .btn-ghost {
       background: transparent; color: var(--navy);
@@ -142,12 +217,12 @@
     }
     .btn-ghost:hover { background: var(--sky); }
     .btn-sm { padding: 6px 12px; font-size: .82rem; border-radius: 7px; }
+
     .btn-add-product {
       width: 100%; padding: 13px; border-radius: 10px;
       border: 2px dashed #9eb0d8; background: #f5f7ff;
       color: var(--navy-light); font-size: .95rem; font-weight: 700;
-      font-family: 'Nunito', sans-serif; cursor: pointer;
-      transition: all .2s;
+      font-family: 'Nunito', sans-serif; cursor: pointer; transition: all .2s;
     }
     .btn-add-product:hover { background: var(--sky); border-color: var(--navy-light); }
 
@@ -156,12 +231,11 @@
       color: var(--muted); font-size: .88rem; font-weight: 700;
       cursor: pointer; background: none; border: none;
       font-family: 'Nunito', sans-serif;
-      margin-bottom: 18px; padding: 0;
-      transition: color .15s;
+      margin-bottom: 18px; padding: 0; transition: color .15s;
     }
     .back-link:hover { color: var(--navy); }
 
-    /* ── TABLE ───────────────────────────────── */
+    /* ── TABLE ──────────────────────────────── */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
     thead th {
@@ -177,13 +251,11 @@
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: #f7f9ff; }
 
-    .empty-state {
-      text-align: center; padding: 56px 20px; color: var(--muted);
-    }
+    .empty-state { text-align: center; padding: 56px 20px; color: var(--muted); }
     .empty-state .icon { font-size: 2.8rem; margin-bottom: 10px; }
     .empty-state p { font-size: .95rem; }
 
-    /* ── FORM ────────────────────────────────── */
+    /* ── FORM ───────────────────────────────── */
     .form-group { margin-bottom: 16px; }
     label {
       display: block; font-size: .78rem; font-weight: 800;
@@ -194,20 +266,18 @@
       width: 100%; padding: 11px 14px;
       border: 1.5px solid var(--border); border-radius: 9px;
       font-size: .93rem; font-family: 'Nunito', sans-serif;
-      color: var(--text); background: #fff;
-      transition: border-color .2s;
+      color: var(--text); background: #fff; transition: border-color .2s;
     }
     input:focus, select:focus, textarea:focus {
       outline: none; border-color: var(--navy);
     }
-    input[readonly] {
-      background: var(--sky); font-weight: 800; color: var(--navy);
-    }
+    input[readonly] { background: var(--sky); font-weight: 800; color: var(--navy); }
+
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
     .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
 
-    /* ── ITEM ROW ────────────────────────────── */
+    /* ── ITEM ROW ───────────────────────────── */
     .item-row {
       background: #f7f9ff; border: 1.5px solid var(--border);
       border-radius: 12px; padding: 18px; margin-bottom: 12px;
@@ -218,8 +288,7 @@
       position: absolute; top: -10px; left: 16px;
       background: var(--navy); color: #fff;
       font-size: .72rem; font-weight: 900;
-      padding: 2px 10px; border-radius: 999px;
-      letter-spacing: .05em;
+      padding: 2px 10px; border-radius: 999px; letter-spacing: .05em;
     }
     .btn-remove-item {
       position: absolute; top: 12px; right: 12px;
@@ -230,7 +299,7 @@
     }
     .btn-remove-item:hover { background: #fecaca; }
 
-    /* ── TOTAL BAR ───────────────────────────── */
+    /* ── TOTAL BAR ──────────────────────────── */
     .total-bar {
       background: var(--navy); color: #fff;
       border-radius: 12px; padding: 18px 22px;
@@ -241,18 +310,16 @@
 
     .nota-actions {
       display: flex; gap: 10px; margin-top: 24px;
-      padding-top: 22px; border-top: 1px solid var(--border);
-      flex-wrap: wrap;
+      padding-top: 22px; border-top: 1px solid var(--border); flex-wrap: wrap;
     }
 
-    /* ── FOLIO BADGE ─────────────────────────── */
     .folio-badge {
       display: inline-block; background: var(--sky); color: var(--navy);
       font-weight: 900; padding: 3px 12px; border-radius: 6px;
       font-size: .88rem; letter-spacing: .04em;
     }
 
-    /* ── MODAL ───────────────────────────────── */
+    /* ── MODAL ──────────────────────────────── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(10,20,60,.55); z-index: 500;
@@ -265,7 +332,6 @@
       box-shadow: 0 24px 64px rgba(10,20,60,.22);
       animation: pop .2s ease;
     }
-    .modal-lg { max-width: 680px; }
     @keyframes pop {
       from { transform: scale(.95); opacity: 0; }
       to   { transform: scale(1);   opacity: 1; }
@@ -273,7 +339,7 @@
     .modal-title { font-size: 1.2rem; font-weight: 900; color: var(--navy); margin-bottom: 24px; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 
-    /* ── TOAST ───────────────────────────────── */
+    /* ── TOAST ──────────────────────────────── */
     .toast {
       position: fixed; bottom: 28px; right: 28px;
       padding: 14px 20px; border-radius: 12px;
@@ -283,17 +349,18 @@
       animation: slideUp .25s ease;
     }
     @keyframes slideUp {
-      from { transform: translateY(16px); opacity: 0; }
+      from { transform: translateY(14px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
     }
     .toast-ok  { background: var(--success-bg); color: var(--success); }
     .toast-err { background: var(--danger-bg);  color: var(--danger); }
 
-    /* ── LOADER ──────────────────────────────── */
+    /* ── LOADER ─────────────────────────────── */
     .loader-wrap {
       display: none; position: fixed; inset: 0;
-      background: rgba(255,255,255,.75); z-index: 9000;
-      align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+      background: rgba(255,255,255,.75); z-index: 8000;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px;
     }
     .loader-wrap.on { display: flex; }
     .spinner {
@@ -306,24 +373,9 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loader-text { font-size: .88rem; font-weight: 700; color: var(--muted); }
 
-    /* ── SQL BOX ─────────────────────────────── */
-    .sql-box {
-      background: #0f172a; color: #7dd3fc;
-      border-radius: 10px; padding: 16px; font-size: .78rem;
-      font-family: 'Courier New', monospace; max-height: 240px;
-      overflow-y: auto; white-space: pre; line-height: 1.6;
-      margin: 12px 0;
-    }
-    .info-box {
-      background: #eff6ff; border: 1px solid #bfdbfe;
-      border-radius: 10px; padding: 14px 16px;
-      font-size: .83rem; color: #1e40af; line-height: 1.6;
-      margin-bottom: 16px;
-    }
-
-    /* ─────────────────────────────────────────
-       PRINT VIEW
-    ───────────────────────────────────────── */
+    /* ══════════════════════════════════
+       PRINT
+    ══════════════════════════════════ */
     #print-view { display: none; }
 
     @media print {
@@ -331,10 +383,8 @@
       #print-view {
         display: block !important;
         font-family: Arial, sans-serif;
-        font-size: 11pt;
-        color: #000;
+        font-size: 11pt; color: #000;
       }
-      .no-print { display: none !important; }
       @page { margin: 12mm; }
     }
 
@@ -343,66 +393,104 @@
       border: 1.5px solid #222; padding: 22px 26px;
     }
     .pv-top {
-      display: flex; justify-content: space-between;
-      align-items: flex-start;
+      display: flex; justify-content: space-between; align-items: flex-start;
       border-bottom: 2px solid #222; padding-bottom: 14px; margin-bottom: 14px;
     }
-    .pv-logo { height: 68px; object-fit: contain; }
+    .pv-logo        { height: 68px; object-fit: contain; }
     .pv-title-block { text-align: right; }
-    .pv-title { font-size: 22pt; font-weight: 700; }
-    .pv-meta { font-size: 9.5pt; margin-top: 4px; line-height: 1.7; }
+    .pv-title       { font-size: 22pt; font-weight: 700; }
+    .pv-meta        { font-size: 9.5pt; margin-top: 4px; line-height: 1.7; }
     .pv-meta strong { font-weight: 700; }
+
     .pv-client-table { width: 100%; margin-bottom: 12px; }
     .pv-client-table td { padding: 2px 0; font-size: 10pt; }
     .pv-client-table .lbl { font-weight: 700; width: 75px; }
+
     .pv-work-header {
-      background: #2c4a7c; color: #fff;
-      text-align: center; padding: 6px 10px;
-      font-size: 9.5pt; font-weight: 700;
+      background: #2c4a7c; color: #fff; text-align: center;
+      padding: 6px 10px; font-size: 9.5pt; font-weight: 700;
     }
     .pv-work-sub {
       background: #d8edda; text-align: center;
-      padding: 4px 10px; font-size: 9pt;
-      margin-bottom: 12px;
+      padding: 4px 10px; font-size: 9pt; margin-bottom: 12px;
     }
     .pv-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
     .pv-table th {
       background: #2c4a7c; color: #fff;
       padding: 7px 10px; text-align: left; font-size: 9pt;
     }
-    .pv-table td { padding: 10px; border: 1px solid #ccc; font-size: 9.5pt; vertical-align: top; }
-    .pv-table .tc { text-align: center; }
-    .pv-table .tr { text-align: right; }
-    .pv-table .w-qty { width: 72px; }
+    .pv-table td   { padding: 10px; border: 1px solid #ccc; font-size: 9.5pt; vertical-align: top; }
+    .pv-table .tc  { text-align: center; }
+    .pv-table .tr  { text-align: right; }
+    .pv-table .w-qty   { width: 72px; }
     .pv-table .w-price { width: 130px; }
     .pv-table .w-total { width: 110px; }
     .pv-total-row td {
       font-weight: 700; border: none;
       border-top: 2px solid #333; text-align: right; padding: 8px 10px;
     }
-    .pv-address { text-align: center; font-size: 8.5pt; color: #555; padding-top: 8px; border-top: 1px solid #ccc; }
+    .pv-address {
+      text-align: center; font-size: 8.5pt; color: #555;
+      padding-top: 8px; border-top: 1px solid #ccc;
+    }
     .pv-thanks { text-align: center; font-weight: 700; margin-top: 18px; font-size: 10pt; }
+
+    /* ── Responsive ─────────────────────────── */
+    @media (max-width: 640px) {
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .nav-brand { display: none; }
+      .navbar { padding: 0 14px; }
+      .main { padding: 20px 14px; }
+      .login-box { padding: 32px 22px; }
+    }
   </style>
 </head>
 <body>
 
-<div id="view-login">
-  <div class="login-card">
-    <img src="logo.png" class="login-logo" alt="DUNAS" onerror="this.style.display='none'">
-    <h2 style="color: var(--navy); margin-bottom: 24px; font-weight: 900;">Iniciar Sesión</h2>
-    <div class="form-group" style="text-align: left;">
-      <label>Correo Electrónico</label>
-      <input type="email" id="login-email" placeholder="tu@email.com">
+<!-- ════════════════════════════════════════
+     LOGIN
+════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-deco login-deco-1"></div>
+    <div class="login-deco login-deco-2"></div>
+
+    <div class="login-logo-wrap">
+      <img src="logo.png" class="login-logo" alt="DUNAS"
+        onerror="this.style.display='none';document.getElementById('logo-fb').style.display='block'">
+      <div id="logo-fb" class="login-logo-fallback" style="display:none">DUNAS</div>
+      <div class="login-subtitle">Notas de Venta</div>
     </div>
-    <div class="form-group" style="text-align: left;">
+
+    <div class="login-title">Iniciar Sesión</div>
+
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos.</div>
+
+    <div class="login-fg">
+      <label>Usuario</label>
+      <input type="text" id="login-usuario" placeholder="usuario"
+        autocomplete="username"
+        onkeydown="if(event.key==='Enter') document.getElementById('login-pass').focus()">
+    </div>
+
+    <div class="login-fg">
       <label>Contraseña</label>
-      <input type="password" id="login-pass" placeholder="••••••••">
+      <input type="password" id="login-pass" placeholder="••••••••"
+        autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()">
     </div>
-    <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;" onclick="handleLogin()">Entrar al Sistema</button>
+
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Entrar</button>
   </div>
 </div>
 
-<div id="app-content">
+<!-- ════════════════════════════════════════
+     APP
+════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- NAVBAR -->
   <nav class="navbar">
     <img src="logo.png" class="nav-logo" alt="DUNAS" onerror="this.style.display='none'">
     <span class="nav-brand">Notas de Venta</span>
@@ -411,11 +499,17 @@
     <button class="nav-btn"        id="nav-clientes" onclick="gotoView('clientes')">👥 Clientes</button>
     <button class="nav-btn"        id="nav-modelos"  onclick="gotoView('modelos')">📦 Modelos</button>
     <div class="nav-spacer"></div>
-    <button class="nav-config" onclick="abrirConfig()" title="Configuración">⚙️</button>
-    <button class="nav-logout" onclick="handleLogout()" title="Cerrar Sesión">Sair 🚪</button>
+    <div class="nav-user">
+      <div class="nav-user-avatar" id="nav-avatar">?</div>
+      <span class="nav-user-name"  id="nav-username"></span>
+      <button class="btn-logout" onclick="cerrarSesion()">Salir 👋</button>
+    </div>
   </nav>
 
+  <!-- MAIN -->
   <div class="main">
+
+    <!-- ── NOTAS: lista ─────────────────── -->
     <div class="view active" id="view-notas">
       <div class="page-header">
         <h1 class="page-title">📋 Notas de Venta</h1>
@@ -425,56 +519,234 @@
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Folio</th><th>No. Pedido</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Acciones</th></tr>
+              <tr>
+                <th>Folio</th>
+                <th>No. Pedido</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Acciones</th>
+              </tr>
             </thead>
-            <tbody id="tb-notas"></tbody>
+            <tbody id="tb-notas">
+              <tr><td colspan="6"><div class="empty-state">
+                <div class="icon">📋</div><p>Aún no hay notas registradas</p>
+              </div></td></tr>
+            </tbody>
           </table>
         </div>
       </div>
     </div>
 
+    <!-- ── NOTA: formulario ─────────────── -->
     <div class="view" id="view-nota-form">
       <button class="back-link" onclick="gotoView('notas')">← Regresar a Notas</button>
-      <div class="page-header"><h1 class="page-title" id="nota-form-titulo">Nueva Nota</h1></div>
+      <div class="page-header">
+        <h1 class="page-title" id="nota-form-titulo">Nueva Nota</h1>
+      </div>
+
       <div class="card card-body">
+        <!-- Encabezado -->
         <div class="grid-3" style="margin-bottom:16px">
-          <div class="form-group"><label>Folio / N.º de Venta *</label><input type="text" id="nf-folio" placeholder="RAD04"></div>
-          <div class="form-group"><label>No. Pedido</label><input type="text" id="nf-pedido" placeholder="1061"></div>
-          <div class="form-group"><label>Fecha *</label><input type="date" id="nf-fecha"></div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Folio / N.º de Venta *</label>
+            <input type="text" id="nf-folio" placeholder="RAD04">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>No. Pedido</label>
+            <input type="text" id="nf-pedido" placeholder="1061">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Fecha *</label>
+            <input type="date" id="nf-fecha">
+          </div>
         </div>
+
         <div class="grid-2" style="margin-bottom:16px">
-          <div class="form-group"><label>Cliente *</label><select id="nf-cliente"></select></div>
-          <div class="form-group"><label>Trabajo</label><input type="text" id="nf-trabajo"></div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Cliente *</label>
+            <select id="nf-cliente">
+              <option value="">— Selecciona un cliente —</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Trabajo / Descripción general</label>
+            <input type="text" id="nf-trabajo" placeholder="Fabricacion de palas tejidas">
+          </div>
         </div>
+
+        <!-- Divisor productos -->
+        <div style="display:flex;align-items:center;gap:12px;margin:24px 0 16px">
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+          <span style="font-size:.82rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Productos</span>
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>
+
         <div id="items-wrap"></div>
         <button class="btn-add-product" onclick="agregarItem()">＋ Agregar producto</button>
-        <div class="total-bar"><span>TOTAL</span><span id="nf-total-display">$ 0.00</span></div>
+
+        <!-- Total -->
+        <div class="total-bar">
+          <span>TOTAL</span>
+          <span id="nf-total-display">$ 0.00</span>
+        </div>
+
+        <!-- Acciones -->
         <div class="nota-actions">
-          <button class="btn btn-primary" id="btn-guardar" onclick="guardarNota()">💾 Guardar Nota</button>
-          <button class="btn btn-red" id="btn-imprimir" onclick="imprimirNota()" style="display:none">🖨️ Imprimir</button>
-          <button class="btn btn-ghost" onclick="gotoView('notas')">✕ Cancelar</button>
+          <button class="btn btn-primary" id="btn-guardar"  onclick="guardarNota()">💾 Guardar Nota</button>
+          <button class="btn btn-red"     id="btn-imprimir" onclick="imprimirNota()" style="display:none">🖨️ Imprimir</button>
+          <button class="btn btn-ghost"   onclick="gotoView('notas')">✕ Cancelar</button>
         </div>
       </div>
     </div>
 
+    <!-- ── CLIENTES ──────────────────────── -->
     <div class="view" id="view-clientes">
       <div class="page-header">
         <h1 class="page-title">👥 Clientes</h1>
         <button class="btn btn-primary" onclick="abrirModalCliente()">＋ Nuevo Cliente</button>
       </div>
-      <div class="card"><div class="table-wrap"><table><thead><tr><th>#</th><th>Nombre</th><th>Ciudad</th><th>Teléfono</th><th>Acciones</th></tr></thead><tbody id="tb-clientes"></tbody></table></div></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nombre</th><th>Ciudad</th><th>Teléfono</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tb-clientes">
+              <tr><td colspan="5"><div class="empty-state">
+                <div class="icon">👥</div><p>No hay clientes registrados</p>
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
+    <!-- ── MODELOS ───────────────────────── -->
     <div class="view" id="view-modelos">
       <div class="page-header">
         <h1 class="page-title">📦 Modelos</h1>
         <button class="btn btn-primary" onclick="abrirModalModelo()">＋ Nuevo Modelo</button>
       </div>
-      <div class="card"><div class="table-wrap"><table><thead><tr><th>#</th><th>Modelo</th><th>Acciones</th></tr></thead><tbody id="tb-modelos"></tbody></table></div></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nombre del Modelo</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tb-modelos">
+              <tr><td colspan="3"><div class="empty-state">
+                <div class="icon">📦</div><p>No hay modelos registrados</p>
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ════════════════════════════════════════
+     MODALES
+════════════════════════════════════════ -->
+
+<!-- Modal: Cliente -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-title" id="modal-cliente-titulo">Nuevo Cliente</div>
+    <input type="hidden" id="mc-id">
+    <div class="form-group">
+      <label>Nombre *</label>
+      <input type="text" id="mc-nombre" placeholder="RADDOCK">
+    </div>
+    <div class="form-group">
+      <label>Ciudad</label>
+      <input type="text" id="mc-ciudad" placeholder="San Francisco del Rincon">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label>Teléfono</label>
+      <input type="text" id="mc-tel" placeholder="(476)737-9039">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"   onclick="cerrarModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-cliente"><div class="modal"><div class="modal-title" id="modal-cliente-titulo">Nuevo Cliente</div><input type="hidden" id="mc-id"><div class="form-group"><label>Nombre *</label><input type="text" id="mc-nombre"></div><div class="form-group"><label>Ciudad</label><input type="text" id="mc-ciudad"></div><div class="form-group"><label>Teléfono</label><input type="text" id="mc-tel"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="cerrarModal('modal-cliente')">Cancelar</button><button class="btn btn-primary" onclick="guardarCliente()">Guardar</button></div></div></div>
-<div class="modal-overlay" id="modal-modelo"><div class="modal"><div class="modal-title" id="modal-modelo-titulo">Nuevo Modelo</div><input type="hidden" id="mm-id"><div class="form-group"><label>Nombre del Modelo *</label><input type="text" id="mm-nombre"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="cerrarModal('modal-modelo')">Cancelar</button><button class="btn btn-primary" onclick="guardarModelo()">Guardar</button></div></div></div>
-<div class="modal-overlay" id="modal-config"><div class="modal modal-lg"><div class="modal-title">⚙️ Configuración</div><div class="form-group"><label>Supabase URL</label><input type="text" id="cfg-url"></div><div class="form-group"><label
+<!-- Modal: Modelo -->
+<div class="modal-overlay" id="modal-modelo">
+  <div class="modal">
+    <div class="modal-title" id="modal-modelo-titulo">Nuevo Modelo</div>
+    <input type="hidden" id="mm-id">
+    <div class="form-group" style="margin-bottom:0">
+      <label>Nombre del Modelo *</label>
+      <input type="text" id="mm-nombre" placeholder="PALAS MODELO 3086">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"   onclick="cerrarModal('modal-modelo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarModelo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     VISTA DE IMPRESIÓN
+════════════════════════════════════════ -->
+<div id="print-view">
+  <div class="pv-wrap">
+    <div class="pv-top">
+      <img src="logo.png" class="pv-logo" alt="DUNAS">
+      <div class="pv-title-block">
+        <div class="pv-title">Nota de Venta</div>
+        <div class="pv-meta">
+          <strong>Fecha: </strong><span id="pv-fecha"></span><br>
+          <strong>No. Pedido </strong><span id="pv-pedido"></span><br>
+          <strong>N.º de Venta: </strong><span id="pv-folio"></span>
+        </div>
+      </div>
+    </div>
+    <table class="pv-client-table">
+      <tr><td class="lbl">Cliente:</td><td id="pv-cliente"></td></tr>
+      <tr><td class="lbl">Ciudad:</td> <td id="pv-ciudad"></td></tr>
+      <tr><td class="lbl">Tel:</td>    <td id="pv-tel"></td></tr>
+    </table>
+    <div class="pv-work-header">Trabajo</div>
+    <div class="pv-work-sub" id="pv-trabajo"></div>
+    <table class="pv-table">
+      <thead>
+        <tr>
+          <th class="w-qty tc">Cantidad</th>
+          <th>Descripcion</th>
+          <th class="w-price tr">Precio por unidad</th>
+          <th class="w-total tr">Total</th>
+        </tr>
+      </thead>
+      <tbody id="pv-items"></tbody>
+      <tfoot>
+        <tr class="pv-total-row">
+          <td colspan="3">Total:</td>
+          <td>$ <span id="pv-total"></span></td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="pv-address" id="pv-address"></div>
+    <div class="pv-thanks">Gracias por su confianza.</div>
+  </div>
+</div>
+
+<!-- LOADER -->
+<div class="loader-wrap" id="loader">
+  <div class="spinner"></div>
+  <div class="loader-text">Cargando…</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Scripts: config primero, luego app -->
+<script src="app.js"></script>
+
+</body>
+</html>
