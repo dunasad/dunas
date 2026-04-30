@@ -381,39 +381,26 @@
     @media print {
       body > *:not(#print-view) { display: none !important; }
 
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important; padding: 0 !important;
+      }
       #print-view {
         display: block !important;
         font-family: Arial, sans-serif;
         font-size: 11pt;
         color: #000;
+        background: #ffffff !important;
       }
-
-      /* Sin márgenes extra del navegador */
       @page {
         margin: 14mm 16mm;
         size: letter;
       }
-
-      /* Forzar colores reales al imprimir (logo a color, fondos, etc.) */
       * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
       }
-
-      /* Pie de página fijo */
-      .pv-footer {
-        position: fixed;
-        bottom: 0; left: 0; right: 0;
-        text-align: center;
-        font-size: 8pt;
-        color: #555;
-        border-top: 1px solid #ccc;
-        padding-top: 6px;
-      }
-
-      /* Espacio para que el contenido no tape el pie */
-      .pv-body-content { margin-bottom: 40px; }
     }
 
     /* ── Estilos del documento imprimible ── */
@@ -481,11 +468,11 @@
       margin-top: 22px; font-size: 10pt;
     }
 
-    /* Pie de página — se fija al fondo solo en impresión */
+    /* Pie de página — debajo del contenido */
     .pv-footer {
       text-align: center; font-size: 8.5pt; color: #555;
       border-top: 1px solid #ccc; padding-top: 8px;
-      margin-top: 30px;   /* en pantalla, queda abajo del contenido */
+      margin-top: 28px;
     }
 
     /* ── Responsive ─────────────────────────── */
@@ -750,52 +737,49 @@
 <div id="print-view">
   <div class="pv-wrap">
 
-    <!-- Pie de página fijo al imprimir -->
-    <div class="pv-footer" id="pv-address"></div>
-
-    <!-- Contenido principal -->
-    <div class="pv-body-content">
-      <div class="pv-top">
-        <img src="logo.png" class="pv-logo" alt="DUNAS">
-        <div class="pv-title-block">
-          <div class="pv-title">Nota de Venta</div>
-          <div class="pv-meta">
-            <strong>Fecha:&nbsp;</strong><span id="pv-fecha"></span><br>
-            <strong>No. Pedido&nbsp;</strong><span id="pv-pedido"></span><br>
-            <strong>N.º de Venta:&nbsp;</strong><span id="pv-folio"></span>
-          </div>
+    <div class="pv-top">
+      <img src="logo.png" class="pv-logo" alt="DUNAS">
+      <div class="pv-title-block">
+        <div class="pv-title">Nota de Venta</div>
+        <div class="pv-meta">
+          <strong>Fecha:&nbsp;</strong><span id="pv-fecha"></span><br>
+          <strong>No. Pedido&nbsp;</strong><span id="pv-pedido"></span><br>
+          <strong>N.º de Venta:&nbsp;</strong><span id="pv-folio"></span>
         </div>
       </div>
+    </div>
 
-      <table class="pv-client-table">
-        <tr><td class="lbl">Cliente:</td><td id="pv-cliente"></td></tr>
-        <tr><td class="lbl">Ciudad:</td> <td id="pv-ciudad"></td></tr>
-        <tr><td class="lbl">Tel:</td>    <td id="pv-tel"></td></tr>
-      </table>
+    <table class="pv-client-table">
+      <tr><td class="lbl">Cliente:</td><td id="pv-cliente"></td></tr>
+      <tr><td class="lbl">Ciudad:</td> <td id="pv-ciudad"></td></tr>
+      <tr><td class="lbl">Tel:</td>    <td id="pv-tel"></td></tr>
+    </table>
 
-      <div class="pv-work-header">Trabajo</div>
-      <div class="pv-work-sub" id="pv-trabajo"></div>
+    <div class="pv-work-header">Trabajo</div>
+    <div class="pv-work-sub" id="pv-trabajo"></div>
 
-      <table class="pv-table">
-        <thead>
-          <tr>
-            <th class="w-qty tc">Cantidad</th>
-            <th>Descripcion</th>
-            <th class="w-price tr">Precio por unidad</th>
-            <th class="w-total tr">Total</th>
-          </tr>
-        </thead>
-        <tbody id="pv-items"></tbody>
-        <tfoot>
-          <tr class="pv-total-row">
-            <td colspan="3">Total:</td>
-            <td>$&nbsp;<span id="pv-total"></span></td>
-          </tr>
-        </tfoot>
-      </table>
+    <table class="pv-table">
+      <thead>
+        <tr>
+          <th class="w-qty tc">Cantidad</th>
+          <th>Descripcion</th>
+          <th class="w-price tr">Precio por unidad</th>
+          <th class="w-total tr">Total</th>
+        </tr>
+      </thead>
+      <tbody id="pv-items"></tbody>
+      <tfoot>
+        <tr class="pv-total-row">
+          <td colspan="3">Total:</td>
+          <td>$&nbsp;<span id="pv-total"></span></td>
+        </tr>
+      </tfoot>
+    </table>
 
-      <div class="pv-thanks">Gracias por su confianza.</div>
-    </div><!-- /pv-body-content -->
+    <div class="pv-thanks">Gracias por su confianza.</div>
+
+    <!-- Dirección — pie de página al final del contenido -->
+    <div class="pv-footer" id="pv-address"></div>
 
   </div>
 </div>
