@@ -1,216 +1,618 @@
-const SB_URL = "https://coywogyelfaspxlsctjv.supabase.co/rest/v1";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNveXdvZ3llbGZhc3B4bHNjdGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNTkzMDksImV4cCI6MjA5MjYzNTMwOX0.BXT3hpn9CZevtc39KEVzkwyhjfCQ_087eyNp5UuFTS8"; 
-const headers = { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Content-Type": "application/json" };
+// ─────────────────────────────────────────────
+//  DUNAS – app.js
+//  Lógica principal: Auth, Notas, Clientes, Modelos
+// ─────────────────────────────────────────────
 
-let appData = { clientes: [], modelos: [] };
+// ── Supabase client ──────────────────────────
+const { createClient } = supabase;
+const SB = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
-// --- PERSISTENCIA Y LOGIN ---
-document.addEventListener('DOMContentLoaded', () => {
-    const session = localStorage.getItem('dunas_session');
-    if (session) {
-        document.getElementById('login-screen').classList.add('d-none');
-        document.getElementById('main-app').classList.remove('d-none');
-        init();
+// ── Estado global ────────────────────────────
+let clientes = [];
+let modelos  = [];
+let notas    = [];
+let notaActualId  = null;
+let usuarioActual = null;
+let itemSeq = 0;
+
+// ════════════════════════════════════════════
+//  UTILIDADES
+// ════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+function loader(on) {
+  $('loader').classList.toggle('on', on);
+}
+
+let _toastTimer;
+function toast(msg, tipo = 'ok') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `toast toast-${tipo}`;
+  el.style.display = 'block';
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => (el.style.display = 'none'), 3500);
+}
+
+function fmtMoney(n) {
+  return parseFloat(n || 0).toLocaleString('es-MX', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function fmtFecha(d) {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+// ════════════════════════════════════════════
+//  SESIÓN  (sessionStorage → dura hasta cerrar pestaña)
+// ════════════════════════════════════════════
+function getSesion() {
+  try { return JSON.parse(sessionStorage.getItem('dunas_user')); }
+  catch { return null; }
+}
+function setSesion(user) {
+  sessionStorage.setItem('dunas_user', JSON.stringify(user));
+}
+function limpiarSesion() {
+  sessionStorage.removeItem('dunas_user');
+}
+
+// ════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════
+async function doLogin() {
+  const usuario = $('login-usuario').value.trim();
+  const pass    = $('login-pass').value;
+  const errEl   = $('login-error');
+  const btnEl   = $('btn-login');
+
+  if (!usuario || !pass) {
+    errEl.textContent = 'Ingresa tu usuario y contraseña.';
+    errEl.classList.add('visible');
+    return;
+  }
+
+  errEl.classList.remove('visible');
+  btnEl.disabled      = true;
+  btnEl.textContent   = 'Verificando…';
+
+  try {
+    const { data, error } = await SB
+      .from('usuarios')
+      .select('id, nombre, usuario')
+      .eq('usuario', usuario)
+      .eq('password', pass)
+      .single();
+
+    if (error || !data) {
+      errEl.textContent = 'Usuario o contraseña incorrectos.';
+      errEl.classList.add('visible');
+      $('login-pass').value = '';
+      $('login-pass').focus();
+    } else {
+      usuarioActual = data;
+      setSesion(data);
+      mostrarApp();
     }
+  } catch {
+    errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+    errEl.classList.add('visible');
+  }
+
+  btnEl.disabled    = false;
+  btnEl.textContent = 'Entrar';
+}
+
+function mostrarApp() {
+  $('login-screen').classList.remove('visible');
+  $('app').classList.add('visible');
+  const nombre = usuarioActual.nombre || usuarioActual.usuario || 'Usuario';
+  $('nav-username').textContent = nombre;
+  $('nav-avatar').textContent   = nombre.charAt(0).toUpperCase();
+  cargarTodo();
+}
+
+function cerrarSesion() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  limpiarSesion();
+  usuarioActual = null;
+  $('app').classList.remove('visible');
+  $('login-screen').classList.add('visible');
+  $('login-usuario').value = '';
+  $('login-pass').value    = '';
+  $('login-error').classList.remove('visible');
+  setTimeout(() => $('login-usuario').focus(), 100);
+}
+
+// ════════════════════════════════════════════
+//  VISTAS
+// ════════════════════════════════════════════
+function gotoView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  $('view-' + name)?.classList.add('active');
+  $('nav-' + name)?.classList.add('active');
+  notaActualId = null;
+}
+
+function gotoViewRaw(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  $('view-' + name)?.classList.add('active');
+}
+
+// ════════════════════════════════════════════
+//  CARGA DE DATOS
+// ════════════════════════════════════════════
+async function cargarTodo() {
+  loader(true);
+  try {
+    const [rc, rm, rn] = await Promise.all([
+      SB.from('clientes').select('*').order('nombre'),
+      SB.from('modelos').select('*').order('nombre'),
+      SB.from('notas')
+        .select('id, folio, pedido, fecha, total, cliente_id, clientes(nombre)')
+        .order('created_at', { ascending: false }),
+    ]);
+    clientes = rc.data || [];
+    modelos  = rm.data || [];
+    notas    = rn.data || [];
+    renderClientes();
+    renderModelos();
+    renderNotas();
+    poblarSelectCliente();
+  } catch (e) {
+    toast('❌ Error al cargar datos: ' + e.message, 'err');
+  }
+  loader(false);
+}
+
+// ════════════════════════════════════════════
+//  NOTAS – Lista
+// ════════════════════════════════════════════
+function renderNotas() {
+  const tb = $('tb-notas');
+  if (!notas.length) {
+    tb.innerHTML = `<tr><td colspan="6">
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <p>Aún no hay notas registradas</p>
+      </div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = notas.map(n => `
+    <tr>
+      <td><span class="folio-badge">${n.folio || '—'}</span></td>
+      <td>${n.pedido || '—'}</td>
+      <td>${fmtFecha(n.fecha)}</td>
+      <td><strong>${n.clientes?.nombre || '—'}</strong></td>
+      <td><strong>$&nbsp;${fmtMoney(n.total || 0)}</strong></td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="verNota(${n.id})">👁️ Ver</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarNota(${n.id})">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ════════════════════════════════════════════
+//  NOTAS – Nueva
+// ════════════════════════════════════════════
+function abrirNuevaNota() {
+  notaActualId = null;
+  $('nota-form-titulo').textContent = 'Nueva Nota';
+  $('btn-guardar').textContent      = '💾 Guardar Nota';
+  $('btn-guardar').style.display    = '';
+  $('btn-imprimir').style.display   = 'none';
+
+  $('nf-fecha').value   = new Date().toISOString().split('T')[0];
+  $('nf-folio').value   = '';
+  $('nf-pedido').value  = '';
+  $('nf-trabajo').value = 'Fabricacion de palas tejidas';
+  $('nf-cliente').value = '';
+  $('items-wrap').innerHTML = '';
+  itemSeq = 0;
+  agregarItem();
+  calcTotal();
+  gotoViewRaw('nota-form');
+}
+
+// ════════════════════════════════════════════
+//  NOTAS – Ver / Editar
+// ════════════════════════════════════════════
+async function verNota(id) {
+  loader(true);
+  const { data: nota } = await SB.from('notas').select('*, clientes(*)').eq('id', id).single();
+  const { data: det  } = await SB.from('detalle_notas').select('*, modelos(nombre)').eq('nota_id', id);
+  loader(false);
+  if (!nota) return;
+
+  notaActualId = id;
+  $('nota-form-titulo').textContent = `Nota: ${nota.folio}`;
+  $('btn-guardar').textContent      = '💾 Guardar Cambios';
+  $('btn-guardar').style.display    = '';
+  $('btn-imprimir').style.display   = '';
+
+  $('nf-folio').value   = nota.folio       || '';
+  $('nf-pedido').value  = nota.pedido      || '';
+  $('nf-fecha').value   = nota.fecha       || '';
+  $('nf-trabajo').value = nota.trabajo     || '';
+  $('nf-cliente').value = nota.cliente_id  || '';
+
+  $('items-wrap').innerHTML = '';
+  itemSeq = 0;
+  (det || []).forEach(d => {
+    agregarItemConDatos({
+      modelo_id:   d.modelo_id,
+      descripcion: d.descripcion || '',
+      cantidad:    d.cantidad,
+      precio:      d.precio,
+    });
+  });
+  calcTotal();
+  gotoViewRaw('nota-form');
+}
+
+// ════════════════════════════════════════════
+//  NOTAS – Guardar
+// ════════════════════════════════════════════
+async function guardarNota() {
+  const folio     = $('nf-folio').value.trim();
+  const pedido    = $('nf-pedido').value.trim();
+  const fecha     = $('nf-fecha').value;
+  const clienteId = $('nf-cliente').value;
+  const trabajo   = $('nf-trabajo').value.trim();
+  const items     = getItemsData();
+
+  if (!folio)        { alert('Ingresa el folio de la nota');    return; }
+  if (!fecha)        { alert('Selecciona la fecha');            return; }
+  if (!clienteId)    { alert('Selecciona un cliente');          return; }
+  if (!items.length) { alert('Agrega al menos un producto');    return; }
+
+  const total = items.reduce((s, i) => s + i.total, 0);
+  loader(true);
+
+  try {
+    if (notaActualId) {
+      // ── UPDATE ─────────────────────────────
+      await SB.from('notas')
+        .update({ folio, pedido, fecha, cliente_id: clienteId, trabajo, total })
+        .eq('id', notaActualId);
+      await SB.from('detalle_notas').delete().eq('nota_id', notaActualId);
+      await SB.from('detalle_notas')
+        .insert(items.map(i => ({ ...i, nota_id: notaActualId })));
+    } else {
+      // ── INSERT ─────────────────────────────
+      const { data: n, error } = await SB
+        .from('notas')
+        .insert({ folio, pedido, fecha, cliente_id: clienteId, trabajo, total })
+        .select()
+        .single();
+      if (error) throw error;
+      notaActualId = n.id;
+      await SB.from('detalle_notas')
+        .insert(items.map(i => ({ ...i, nota_id: n.id })));
+    }
+
+    $('nota-form-titulo').textContent = `Nota: ${folio}`;
+    $('btn-guardar').textContent      = '💾 Guardar Cambios';
+    $('btn-imprimir').style.display   = '';
+    await cargarTodo();
+    toast('✅ Nota guardada correctamente', 'ok');
+  } catch (e) {
+    toast('❌ Error al guardar: ' + e.message, 'err');
+  }
+  loader(false);
+}
+
+async function eliminarNota(id) {
+  if (!confirm('¿Eliminar esta nota? No se puede deshacer.')) return;
+  loader(true);
+  await SB.from('detalle_notas').delete().eq('nota_id', id);
+  await SB.from('notas').delete().eq('id', id);
+  await cargarTodo();
+  toast('🗑️ Nota eliminada', 'ok');
+  loader(false);
+}
+
+// ════════════════════════════════════════════
+//  ITEMS (productos dentro de la nota)
+// ════════════════════════════════════════════
+function agregarItem() {
+  agregarItemConDatos({ modelo_id: '', descripcion: '', cantidad: 1, precio: 0 });
+}
+
+function agregarItemConDatos({ modelo_id, descripcion, cantidad, precio }) {
+  itemSeq++;
+  const sid  = `item-${itemSeq}`;
+  const opts = modelos
+    .map(m => `<option value="${m.id}" ${m.id == modelo_id ? 'selected' : ''}>${m.nombre}</option>`)
+    .join('');
+
+  $('items-wrap').insertAdjacentHTML('beforeend', `
+    <div class="item-row" id="${sid}">
+      <span class="item-num">PRODUCTO ${itemSeq}</span>
+      <button class="btn-remove-item" onclick="quitarItem('${sid}')">✕ Quitar</button>
+      <div style="margin-top:8px">
+        <div class="grid-2" style="margin-bottom:12px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Modelo</label>
+            <select class="item-modelo" onchange="calcTotal()">
+              <option value="">— Selecciona modelo —</option>
+              ${opts}
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Descripción (talla, color, pares…)</label>
+            <input type="text" class="item-desc"
+              placeholder="520 PARES NEGROS" value="${descripcion}">
+          </div>
+        </div>
+        <div class="grid-4">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Cantidad</label>
+            <input type="number" class="item-qty" min="0" value="${cantidad}"
+              oninput="calcItemTotal('${sid}'); calcTotal()">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Precio por unidad</label>
+            <input type="number" class="item-price" min="0" step="0.01" value="${precio}"
+              oninput="calcItemTotal('${sid}'); calcTotal()">
+          </div>
+          <div class="form-group" style="margin-bottom:0; grid-column:span 2">
+            <label>Subtotal</label>
+            <input type="text" class="item-total" readonly
+              value="$ ${fmtMoney(cantidad * precio)}">
+          </div>
+        </div>
+      </div>
+    </div>`);
+}
+
+function quitarItem(id) {
+  $(id)?.remove();
+  calcTotal();
+}
+
+function calcItemTotal(id) {
+  const row = $(id); if (!row) return;
+  const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
+  const price = parseFloat(row.querySelector('.item-price').value) || 0;
+  row.querySelector('.item-total').value = '$ ' + fmtMoney(qty * price);
+}
+
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    const qty   = parseFloat(row.querySelector('.item-qty')?.value)   || 0;
+    const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+    total += qty * price;
+  });
+  $('nf-total-display').textContent = '$ ' + fmtMoney(total);
+}
+
+function getItemsData() {
+  return Array.from(document.querySelectorAll('.item-row')).map(row => {
+    const qty   = parseFloat(row.querySelector('.item-qty').value)   || 0;
+    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+    return {
+      modelo_id:   row.querySelector('.item-modelo').value || null,
+      descripcion: row.querySelector('.item-desc').value.trim(),
+      cantidad: qty,
+      precio:   price,
+      total:    qty * price,
+    };
+  });
+}
+
+// ════════════════════════════════════════════
+//  IMPRIMIR
+// ════════════════════════════════════════════
+async function imprimirNota() {
+  if (!notaActualId) return;
+  loader(true);
+  const { data: nota } = await SB.from('notas').select('*, clientes(*)').eq('id', notaActualId).single();
+  const { data: det  } = await SB.from('detalle_notas').select('*, modelos(nombre)').eq('nota_id', notaActualId);
+  loader(false);
+
+  $('pv-fecha').textContent   = fmtFecha(nota.fecha);
+  $('pv-pedido').textContent  = nota.pedido || '';
+  $('pv-folio').textContent   = nota.folio  || '';
+  $('pv-cliente').textContent = nota.clientes?.nombre   || '';
+  $('pv-ciudad').textContent  = nota.clientes?.ciudad   || '';
+  $('pv-tel').textContent     = nota.clientes?.telefono || '';
+  $('pv-trabajo').textContent = nota.trabajo || '';
+  $('pv-total').textContent   = fmtMoney(nota.total || 0);
+  $('pv-address').textContent = CONFIG.EMPRESA_DIRECCION;
+
+  $('pv-items').innerHTML = (det || []).map(d => `
+    <tr>
+      <td class="tc w-qty">${d.cantidad}</td>
+      <td>
+        <strong>${d.modelos?.nombre || ''}</strong>
+        ${d.descripcion ? '<br>' + d.descripcion : ''}
+      </td>
+      <td class="tr w-price">$ ${fmtMoney(d.precio)}</td>
+      <td class="tr w-total">$ ${fmtMoney(d.total)}</td>
+    </tr>`).join('');
+
+  window.print();
+}
+
+// ════════════════════════════════════════════
+//  CLIENTES
+// ════════════════════════════════════════════
+function renderClientes() {
+  const tb = $('tb-clientes');
+  if (!clientes.length) {
+    tb.innerHTML = `<tr><td colspan="5">
+      <div class="empty-state">
+        <div class="icon">👥</div><p>No hay clientes registrados</p>
+      </div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = clientes.map((c, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><strong>${c.nombre}</strong></td>
+      <td>${c.ciudad   || '—'}</td>
+      <td>${c.telefono || '—'}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="editarCliente(${c.id})">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarCliente(${c.id})">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function poblarSelectCliente() {
+  const sel = $('nf-cliente');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">— Selecciona un cliente —</option>' +
+    clientes.map(c =>
+      `<option value="${c.id}">${c.nombre}${c.ciudad ? ' – ' + c.ciudad : ''}</option>`
+    ).join('');
+  if (val) sel.value = val;
+}
+
+function abrirModalCliente(id) {
+  $('mc-id').value     = '';
+  $('mc-nombre').value = '';
+  $('mc-ciudad').value = '';
+  $('mc-tel').value    = '';
+  $('modal-cliente-titulo').textContent = 'Nuevo Cliente';
+  if (id) {
+    const c = clientes.find(x => x.id === id);
+    if (c) {
+      $('mc-id').value     = c.id;
+      $('mc-nombre').value = c.nombre;
+      $('mc-ciudad').value = c.ciudad   || '';
+      $('mc-tel').value    = c.telefono || '';
+      $('modal-cliente-titulo').textContent = 'Editar Cliente';
+    }
+  }
+  abrirModal('modal-cliente');
+}
+const editarCliente = id => abrirModalCliente(id);
+
+async function guardarCliente() {
+  const nombre = $('mc-nombre').value.trim();
+  if (!nombre) { alert('El nombre es requerido'); return; }
+  const id   = $('mc-id').value;
+  const data = {
+    nombre:   nombre.toUpperCase(),
+    ciudad:   $('mc-ciudad').value.trim(),
+    telefono: $('mc-tel').value.trim(),
+  };
+  loader(true);
+  if (id) await SB.from('clientes').update(data).eq('id', id);
+  else    await SB.from('clientes').insert(data);
+  cerrarModal('modal-cliente');
+  await cargarTodo();
+  toast('✅ Cliente guardado', 'ok');
+  loader(false);
+}
+
+async function eliminarCliente(id) {
+  if (!confirm('¿Eliminar este cliente?')) return;
+  loader(true);
+  await SB.from('clientes').delete().eq('id', id);
+  await cargarTodo();
+  toast('🗑️ Cliente eliminado', 'ok');
+  loader(false);
+}
+
+// ════════════════════════════════════════════
+//  MODELOS
+// ════════════════════════════════════════════
+function renderModelos() {
+  const tb = $('tb-modelos');
+  if (!modelos.length) {
+    tb.innerHTML = `<tr><td colspan="3">
+      <div class="empty-state">
+        <div class="icon">📦</div><p>No hay modelos registrados</p>
+      </div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = modelos.map((m, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><strong>${m.nombre}</strong></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="editarModelo(${m.id})">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarModelo(${m.id})">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function abrirModalModelo(id) {
+  $('mm-id').value     = '';
+  $('mm-nombre').value = '';
+  $('modal-modelo-titulo').textContent = 'Nuevo Modelo';
+  if (id) {
+    const m = modelos.find(x => x.id === id);
+    if (m) {
+      $('mm-id').value     = m.id;
+      $('mm-nombre').value = m.nombre;
+      $('modal-modelo-titulo').textContent = 'Editar Modelo';
+    }
+  }
+  abrirModal('modal-modelo');
+}
+const editarModelo = id => abrirModalModelo(id);
+
+async function guardarModelo() {
+  const nombre = $('mm-nombre').value.trim();
+  if (!nombre) { alert('El nombre del modelo es requerido'); return; }
+  const id = $('mm-id').value;
+  loader(true);
+  if (id) await SB.from('modelos').update({ nombre: nombre.toUpperCase() }).eq('id', id);
+  else    await SB.from('modelos').insert({ nombre: nombre.toUpperCase() });
+  cerrarModal('modal-modelo');
+  await cargarTodo();
+  toast('✅ Modelo guardado', 'ok');
+  loader(false);
+}
+
+async function eliminarModelo(id) {
+  if (!confirm('¿Eliminar este modelo?')) return;
+  loader(true);
+  await SB.from('modelos').delete().eq('id', id);
+  await cargarTodo();
+  toast('🗑️ Modelo eliminado', 'ok');
+  loader(false);
+}
+
+// ════════════════════════════════════════════
+//  MODALES
+// ════════════════════════════════════════════
+function abrirModal(id)  { $(id).classList.add('open');    }
+function cerrarModal(id) { $(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => {
+    if (e.target === o) o.classList.remove('open');
+  });
 });
 
-async function checkAccess() {
-    const user = document.getElementById('userInput').value;
-    const pass = document.getElementById('passInput').value;
-    const res = await fetch(`${SB_URL}/usuarios?usuario=eq.${user}&password=eq.${pass}&select=*`, { headers });
-    const data = await res.json();
-    if (data.length > 0) {
-        localStorage.setItem('dunas_session', 'true');
-        document.getElementById('login-screen').classList.add('d-none');
-        document.getElementById('main-app').classList.remove('d-none');
-        init();
-    } else { Swal.fire('Error', 'Datos incorrectos', 'error'); }
-}
-
-window.logout = () => {
-    localStorage.removeItem('dunas_session');
-    location.reload();
-};
-
-async function init() {
-    await Promise.all([fetchClientes(), fetchModelos()]);
-    renderSelectors();
-    renderTablas();
-    addItem();
-}
-
-// --- NAVEGACIÓN ---
-window.showSection = (section) => {
-    document.querySelectorAll('.app-section').forEach(s => s.classList.add('d-none'));
-    document.querySelectorAll('#sidebar li').forEach(li => li.classList.remove('active'));
-    document.getElementById('sec-' + section).classList.remove('d-none');
-    document.getElementById('menu-' + section).classList.add('active');
-    if(section === 'historial') fetchHistorial();
-};
-
-// --- GESTIÓN DE NOTAS (VENTAS) ---
-window.addItem = () => {
-    const id = Date.now();
-    const html = `
-        <div class="row g-2 mb-3 item-row" id="item-${id}">
-            <div class="col-4">
-                <select class="form-select border-0 bg-light select-modelo">${appData.modelos.map(m => `<option>${m.nombre}</option>`).join('')}</select>
-            </div>
-            <div class="col-3">
-                <input type="text" class="form-control border-0 bg-light input-desc" placeholder="Talla/Color/Obs">
-            </div>
-            <div class="col-2">
-                <input type="number" class="form-control border-0 bg-light input-cant" value="1" oninput="calcularTotal()">
-            </div>
-            <div class="col-2">
-                <input type="number" class="form-control border-0 bg-light input-precio" placeholder="Precio" oninput="calcularTotal()">
-            </div>
-            <div class="col-1 text-end">
-                <button class="btn text-danger" onclick="document.getElementById('item-${id}').remove(); calcularTotal();"><i class="bi bi-trash"></i></button>
-            </div>
-        </div>`;
-    document.getElementById('itemsContainer').insertAdjacentHTML('beforeend', html);
-};
-
-window.calcularTotal = () => {
-    let t = 0;
-    document.querySelectorAll('.item-row').forEach(r => {
-        const c = r.querySelector('.input-cant').value || 0;
-        const p = r.querySelector('.input-precio').value || 0;
-        t += (c * p);
-    });
-    document.getElementById('totalTxt').innerText = t.toFixed(2);
-};
-
-window.guardarNota = async () => {
-    const cliId = document.getElementById('selCliente').value;
-    const total = parseFloat(document.getElementById('totalTxt').innerText);
-    if(!cliId || total <= 0) return Swal.fire('Atención', 'Selecciona cliente y productos', 'info');
-
-    const res = await fetch(`${SB_URL}/notas`, { method: 'POST', headers: {...headers, "Prefer": "return=representation"}, body: JSON.stringify({ cliente_id: cliId, total }) });
-    const nota = await res.json();
-    
-    const items = Array.from(document.querySelectorAll('.item-row')).map(r => ({
-        nota_id: nota[0].id,
-        modelo: r.querySelector('.select-modelo').value,
-        descripcion: r.querySelector('.input-desc').value, // Campo recuperado
-        cantidad: r.querySelector('.input-cant').value,
-        precio: r.querySelector('.input-precio').value
-    }));
-
-    await fetch(`${SB_URL}/detalle_notas`, { method: 'POST', headers, body: JSON.stringify(items) });
-    Swal.fire('Guardado', 'Venta registrada con éxito', 'success');
-    document.getElementById('itemsContainer').innerHTML = "";
-    document.getElementById('totalTxt').innerText = "0.00";
-    addItem();
-};
-
-// --- HISTORIAL Y EDICIÓN ---
-async function fetchHistorial() {
-    const res = await fetch(`${SB_URL}/notas?select=*,clientes(nombre)&order=created_at.desc`, { headers });
-    const notas = await res.json();
-    document.getElementById('tablaHistorialBody').innerHTML = notas.map(n => `
-        <tr>
-            <td class="px-4 small">${new Date(n.created_at).toLocaleDateString()}</td>
-            <td class="fw-bold">${n.clientes ? n.clientes.nombre : 'N/A'}</td>
-            <td class="text-primary fw-bold">$${n.total.toFixed(2)}</td>
-            <td class="text-end px-4">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirEditarNota('${n.id}')"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="eliminarNota('${n.id}')"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`).join('');
-}
-
-window.abrirEditarNota = async (id) => {
-    const res = await fetch(`${SB_URL}/detalle_notas?nota_id=eq.${id}`, { headers });
-    const detalles = await res.json();
-    document.getElementById('editNotaId').value = id;
-    
-    const container = document.getElementById('editItemsContainer');
-    container.innerHTML = detalles.map(d => `
-        <div class="row g-2 mb-2 edit-row">
-            <div class="col-4"><input type="text" class="form-control bg-light" value="${d.modelo}" readonly></div>
-            <div class="col-3"><input type="text" class="form-control edit-desc" value="${d.descripcion || ''}" placeholder="Desc"></div>
-            <div class="col-2"><input type="number" class="form-control edit-cant" value="${d.cantidad}" oninput="calcEdit()"></div>
-            <div class="col-3"><input type="number" class="form-control edit-precio" value="${d.precio}" oninput="calcEdit()"></div>
-        </div>`).join('');
-    
-    calcEdit();
-    new bootstrap.Modal('#modalEditarNota').show();
-};
-
-window.calcEdit = () => {
-    let t = 0;
-    document.querySelectorAll('.edit-row').forEach(r => {
-        t += (r.querySelector('.edit-cant').value * r.querySelector('.edit-precio').value);
-    });
-    document.getElementById('editTotalTxt').innerText = t.toFixed(2);
-};
-
-window.actualizarNota = async () => {
-    const id = document.getElementById('editNotaId').value;
-    const total = parseFloat(document.getElementById('editTotalTxt').innerText);
-    
-    // 1. Actualizar total
-    await fetch(`${SB_URL}/notas?id=eq.${id}`, { method: 'PATCH', headers, body: JSON.stringify({ total }) });
-    
-    // 2. Aquí podrías añadir lógica para actualizar detalles si fuera necesario, 
-    // por ahora actualizamos el total y cerramos.
-    bootstrap.Modal.getInstance(document.getElementById('modalEditarNota')).hide();
-    Swal.fire('Actualizado', 'Nota modificada', 'success');
-    fetchHistorial();
-};
-
-// --- CLIENTES Y MODELOS ---
-window.abrirModalCliente = (id = null) => {
-    const m = new bootstrap.Modal('#modalCliente');
-    if(id) {
-        const c = appData.clientes.find(x => x.id == id);
-        document.getElementById('editCliId').value = c.id;
-        document.getElementById('nomCli').value = c.nombre;
-        document.getElementById('telCli').value = c.telefono;
-    } else {
-        document.getElementById('editCliId').value = "";
-        document.getElementById('nomCli').value = "";
-        document.getElementById('telCli').value = "";
-    }
-    m.show();
-};
-
-window.guardarCliente = async () => {
-    const id = document.getElementById('editCliId').value;
-    const body = { nombre: document.getElementById('nomCli').value, telefono: document.getElementById('telCli').value };
-    const url = id ? `${SB_URL}/clientes?id=eq.${id}` : `${SB_URL}/clientes`;
-    await fetch(url, { method: id ? 'PATCH' : 'POST', headers, body: JSON.stringify(body) });
-    bootstrap.Modal.getInstance('#modalCliente').hide();
-    await fetchClientes();
-    renderTablas();
-};
-
-// --- ELIMINAR ---
-window.eliminarNota = async (id) => {
-    const r = await Swal.fire({ title: '¿Eliminar Nota?', text: 'Se borrará del historial', icon: 'warning', showCancelButton: true });
-    if(r.isConfirmed) {
-        await fetch(`${SB_URL}/notas?id=eq.${id}`, { method: 'DELETE', headers });
-        fetchHistorial();
-    }
-};
-
-window.eliminarRegistro = async (tabla, id) => {
-    const r = await Swal.fire({ title: '¿Eliminar?', icon: 'warning', showCancelButton: true });
-    if(r.isConfirmed) {
-        await fetch(`${SB_URL}/${tabla}?id=eq.${id}`, { method: 'DELETE', headers });
-        tabla === 'clientes' ? await fetchClientes() : await fetchModelos();
-        renderTablas();
-    }
-};
-
-// --- FETCH & RENDER ---
-async function fetchClientes() { const r = await fetch(`${SB_URL}/clientes?select=*&order=nombre.asc`, { headers }); appData.clientes = await r.json(); }
-async function fetchModelos() { const r = await fetch(`${SB_URL}/modelos?select=*&order=nombre.asc`, { headers }); appData.modelos = await r.json(); }
-function renderSelectors() { document.getElementById('selCliente').innerHTML = '<option value="">-- Cliente --</option>' + appData.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); }
-
-function renderTablas() {
-    document.getElementById('tablaClientesBody').innerHTML = appData.clientes.map(c => `<tr><td class="px-4">${c.nombre}</td><td>${c.telefono || ''}</td><td class="text-end px-4"><button class="btn btn-sm btn-outline-primary me-1" onclick="window.abrirModalCliente('${c.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('clientes','${c.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
-    document.getElementById('tablaModelosBody').innerHTML = appData.modelos.map(m => `<tr><td class="px-4">${m.nombre}</td><td class="text-end px-4"><button class="btn btn-sm btn-outline-primary me-1" onclick="window.abrirModalModelo('${m.id}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarRegistro('modelos','${m.id}')"><i class="bi bi-trash"></i></button></td></tr>`).join('');
-}
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const sesion = getSesion();
+  if (sesion) {
+    usuarioActual = sesion;
+    mostrarApp();
+  } else {
+    $('login-screen').classList.add('visible');
+    setTimeout(() => $('login-usuario').focus(), 120);
+  }
+});
