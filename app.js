@@ -466,10 +466,13 @@ async function imprimirNota() {
   const { data: det  } = await SB.from('detalle_notas').select('*, modelos(nombre)').eq('nota_id', notaActualId);
   loader(false);
 
+  const folio   = nota.folio  || 'nota';
+  const cliente = nota.clientes?.nombre || 'cliente';
+
   $('pv-fecha').textContent   = fmtFecha(nota.fecha);
   $('pv-pedido').textContent  = nota.pedido || '';
-  $('pv-folio').textContent   = nota.folio  || '';
-  $('pv-cliente').textContent = nota.clientes?.nombre   || '';
+  $('pv-folio').textContent   = folio;
+  $('pv-cliente').textContent = cliente;
   $('pv-ciudad').textContent  = nota.clientes?.ciudad   || '';
   $('pv-tel').textContent     = nota.clientes?.telefono || '';
   $('pv-trabajo').textContent = nota.trabajo || '';
@@ -487,7 +490,12 @@ async function imprimirNota() {
       <td class="tr w-total">$ ${fmtMoney(d.total)}</td>
     </tr>`).join('');
 
+  // Nombre del archivo PDF = "DUN00301-RADDOCK"
+  const tituloOriginal = document.title;
+  document.title = `${folio}-${cliente}`;
   window.print();
+  // Restaurar título tras un momento (print es sincrónico en Chrome)
+  setTimeout(() => { document.title = tituloOriginal; }, 1500);
 }
 
 // ════════════════════════════════════════════
