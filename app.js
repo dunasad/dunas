@@ -203,15 +203,15 @@ function renderNotas() {
   }
   tb.innerHTML = notas.map(n => `
     <tr>
-      <td><span class="folio-badge">${n.folio || '—'}</span></td>
-      <td>${n.pedido || '—'}</td>
-      <td>${fmtFecha(n.fecha)}</td>
-      <td><strong>${n.clientes?.nombre || '—'}</strong></td>
-      <td><strong>$&nbsp;${fmtMoney(n.total || 0)}</strong></td>
-      <td>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <td data-label="Folio"><span class="folio-badge">${n.folio || '—'}</span></td>
+      <td data-label="No. Pedido">${n.pedido || '—'}</td>
+      <td data-label="Fecha">${fmtFecha(n.fecha)}</td>
+      <td data-label="Cliente"><strong>${n.clientes?.nombre || '—'}</strong></td>
+      <td data-label="Total"><strong>$&nbsp;${fmtMoney(n.total || 0)}</strong></td>
+      <td class="td-actions">
+        <div>
           <button class="btn btn-ghost btn-sm" onclick="verNota(${n.id})">👁️ Ver</button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarNota(${n.id})">🗑️</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarNota(${n.id})">🗑️ Eliminar</button>
         </div>
       </td>
     </tr>`).join('');
@@ -529,14 +529,14 @@ function renderClientes() {
   }
   tb.innerHTML = clientes.map((c, i) => `
     <tr>
-      <td>${i + 1}</td>
-      <td><strong>${c.nombre}</strong></td>
-      <td>${c.ciudad   || '—'}</td>
-      <td>${c.telefono || '—'}</td>
-      <td>
-        <div style="display:flex;gap:6px">
+      <td data-label="#">${i + 1}</td>
+      <td data-label="Nombre"><strong>${c.nombre}</strong></td>
+      <td data-label="Ciudad">${c.ciudad   || '—'}</td>
+      <td data-label="Teléfono">${c.telefono || '—'}</td>
+      <td class="td-actions">
+        <div>
           <button class="btn btn-ghost btn-sm" onclick="editarCliente(${c.id})">✏️ Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarCliente(${c.id})">🗑️</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarCliente(${c.id})">🗑️ Eliminar</button>
         </div>
       </td>
     </tr>`).join('');
@@ -618,12 +618,12 @@ function renderModelos() {
   }
   tb.innerHTML = modelos.map((m, i) => `
     <tr>
-      <td>${i + 1}</td>
-      <td><strong>${m.nombre}</strong></td>
-      <td>
-        <div style="display:flex;gap:6px">
+      <td data-label="#">${i + 1}</td>
+      <td data-label="Modelo"><strong>${m.nombre}</strong></td>
+      <td class="td-actions">
+        <div>
           <button class="btn btn-ghost btn-sm" onclick="editarModelo(${m.id})">✏️ Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarModelo(${m.id})">🗑️</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarModelo(${m.id})">🗑️ Eliminar</button>
         </div>
       </td>
     </tr>`).join('');
