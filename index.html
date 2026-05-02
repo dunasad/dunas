@@ -470,16 +470,37 @@
       text-align: right; padding: 10px 10px 4px;
     }
 
-    .pv-thanks {
-      text-align: center; font-weight: 700;
-      margin-top: 22px; font-size: 10pt;
+    /* ── Pie de página de impresión ──────────
+       En pantalla: visible al final del doc
+       En impresión: fijo al fondo de la hoja
+    ─────────────────────────────────────── */
+    .pv-print-footer {
+      margin-top: 32px;
+      text-align: center;
+    }
+    .pv-thanks-line {
+      font-weight: 700; font-size: 10pt;
+      margin-bottom: 12px;
+    }
+    .pv-address-line {
+      font-size: 8.5pt; color: #555;
+      border-top: 1px solid #ccc;
+      padding-top: 8px;
     }
 
-    /* Pie de página — debajo del contenido */
-    .pv-footer {
-      text-align: center; font-size: 8.5pt; color: #555;
-      border-top: 1px solid #ccc; padding-top: 8px;
-      margin-top: 28px;
+    @media print {
+      /* Footer fijo al fondo — Chrome PDF lo respeta */
+      .pv-print-footer {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        margin: 0;
+        padding: 0 16mm;   /* mismo margen que @page */
+        background: #fff;
+      }
+      /* Espacio para que el contenido no quede tapado por el footer */
+      .pv-table-wrap {
+        margin-bottom: 80px;
+      }
     }
 
     /* ══════════════════════════════════════════
@@ -883,28 +904,31 @@
     <div class="pv-work-header">Trabajo</div>
     <div class="pv-work-sub" id="pv-trabajo"></div>
 
-    <table class="pv-table">
-      <thead>
-        <tr>
-          <th class="w-qty tc">Cantidad</th>
-          <th>Descripcion</th>
-          <th class="w-price tr">Precio por unidad</th>
-          <th class="w-total tr">Total</th>
-        </tr>
-      </thead>
-      <tbody id="pv-items"></tbody>
-      <tfoot>
-        <tr class="pv-total-row">
-          <td colspan="3">Total:</td>
-          <td>$&nbsp;<span id="pv-total"></span></td>
-        </tr>
-      </tfoot>
-    </table>
+    <div class="pv-table-wrap">
+      <table class="pv-table">
+        <thead>
+          <tr>
+            <th class="w-qty tc">Cantidad</th>
+            <th>Descripcion</th>
+            <th class="w-price tr">Precio por unidad</th>
+            <th class="w-total tr">Total</th>
+          </tr>
+        </thead>
+        <tbody id="pv-items"></tbody>
+        <tfoot>
+          <tr class="pv-total-row">
+            <td colspan="3">Total:</td>
+            <td>$&nbsp;<span id="pv-total"></span></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
 
-    <div class="pv-thanks">Gracias por su confianza.</div>
-
-    <!-- Dirección — pie de página al final del contenido -->
-    <div class="pv-footer" id="pv-address"></div>
+    <!-- Pie de página: siempre al fondo de la hoja -->
+    <div class="pv-print-footer">
+      <div class="pv-thanks-line">Gracias por su confianza.</div>
+      <div class="pv-address-line" id="pv-address"></div>
+    </div>
 
   </div>
 </div>
