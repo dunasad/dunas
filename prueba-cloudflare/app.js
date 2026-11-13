@@ -34,7 +34,64 @@ function totals(){let t=0;for(const el of $('items').children){const q=Number(el
 async function newNote(){state.noteId=null;$('editor-title').textContent='Nueva nota';$('note-form').reset();$('items').replaceChildren();state.itemSeq=0;$('fecha').value=localDate();$('trabajo').value='Fabricacion de palas tejidas';$('print-note').hidden=true;try{const x=await request('/api/numeros');$('folio').value=x.folio;$('pedido').value=x.pedido;}catch(e){toast(e.message);return;}newItem();view('editor');}
 async function openNote(id){try{const x=await request('/api/notas/'+id);state.noteId=Number(id);$('editor-title').textContent='Nota '+x.nota.folio;$('folio').value=x.nota.folio;$('pedido').value=x.nota.pedido;$('fecha').value=x.nota.fecha;$('cliente').value=x.nota.cliente_id??'';$('trabajo').value=x.nota.trabajo||'';$('items').replaceChildren();state.itemSeq=0;for(const d of x.detalles)newItem(d);if(!x.detalles.length)newItem();$('print-note').hidden=false;view('editor');}catch(e){toast(e.message)}}
 async function saveNote(e){e.preventDefault();const items=itemsData();if(!items.length||items.some(i=>!(i.cantidad>0)||!(i.precio>=0))){toast('Revisa cantidades y precios');return;}const body={folio:$('folio').value,pedido:$('pedido').value,fecha:$('fecha').value,cliente_id:Number($('cliente').value),trabajo:$('trabajo').value,items};const btn=$('save-note');btn.disabled=true;try{const path=state.noteId?'/api/notas/'+state.noteId:'/api/notas';const x=await request(path,{method:state.noteId?'PUT':'POST',body});state.noteId=Number(x.id);await refresh();$('print-note').hidden=false;toast('Nota guardada correctamente');await openNote(state.noteId);}catch(err){toast('No se guardó: '+err.message)}finally{btn.disabled=false}}
-async function printNote(){if(!state.noteId){toast('Guarda primero la nota');return;}try{const {nota,detalles}=await request('/api/notas/'+state.noteId);const w=window.open('','_blank');if(!w){toast('Permite ventanas emergentes para imprimir');return;}const content=`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${safe(nota.folio)}-${safe(nota.clientes?.nombre)}</title><style>body{font:15px Arial,sans-serif;color:#222;margin:28px}header{display:flex;justify-content:space-between;border-bottom:3px solid #1b2b5e;padding-bottom:15px}h1{color:#1b2b5e;margin:0}table{border-collapse:collapse;width:100%;margin-top:25px}th,td{border-bottom:1px solid #ddd;padding:10px;text-align:left}.right{text-align:right}.total{font-size:23px;font-weight:bold;text-align:right;margin-top:22px}@media print{button{display:none}}</style></head><body><header><div><h1>DUNAS</h1><p>${safe(DUNAS_CONFIG.EMPRESA_DIRECCION)}</p></div><div><b>Folio:</b> ${safe(nota.folio)}<br><b>Pedido:</b> ${safe(nota.pedido)}<br><b>Fecha:</b> ${safe(nota.fecha)}</div></header><p><b>Cliente:</b> ${safe(nota.clientes?.nombre)}<br><b>Ciudad:</b> ${safe(nota.clientes?.ciudad)}<br><b>Teléfono:</b> ${safe(nota.clientes?.telefono)}</p><p><b>Trabajo:</b> ${safe(nota.trabajo)}</p><table><thead><tr><th>Cantidad</th><th>Producto</th><th class="right">Precio</th><th class="right">Importe</th></tr></thead><tbody>${detalles.map(d=>`<tr><td>${safe(d.cantidad)}</td><td><b>${safe(d.modelos?.nombre)}</b> ${safe(d.descripcion)}</td><td class="right">${money(d.precio)}</td><td class="right">${money(d.total)}</td></tr>`).join('')}</tbody></table><div class="total">TOTAL: ${money(nota.total)}</div><button onclick="window.print()">Imprimir / Guardar PDF</button></body></html>`;w.document.open();w.document.write(content);w.document.close();w.focus();}catch(e){toast(e.message)}}
+async function printNote(){
+  if(!state.noteId){toast('Guarda primero la nota');return;}
+  // Abrir la ventana antes de la solicitud asincrónica para evitar bloqueos de popups.
+  const w=window.open('','_blank');
+  if(!w){toast('Permite ventanas emergentes para imprimir');return;}
+  try{
+    w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Preparando nota...</title></head><body><p>Preparando nota para imprimir...</p></body></html>');
+    const {nota,detalles}=await request('/api/notas/'+state.noteId);
+    const fecha=String(nota.fecha||'').slice(0,10);
+    const fechaMX=/^\d{4}-\d{2}-\d{2}$/.test(fecha)?fecha.split('-').reverse().join('/'):fecha;
+    const numero=n=>Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const nombreCliente=nota.clientes?.nombre||'';
+    const titulo=String(nota.folio||'NOTA').replace(/[^a-zA-Z0-9_-]/g,'')+'-'+String(nombreCliente).replace(/[\\/:*?"<>|]/g,'').slice(0,60);
+    const logoURL=new URL('../logo.png',window.location.href).href;
+    const empresaDireccion=DUNAS_CONFIG.EMPRESA_DIRECCION||'';
+    const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safe(titulo)}</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000}body{font:11pt Arial,sans-serif}
+.pv-wrap{max-width:680px;margin:0 auto;padding:18px 0 30px}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #333;padding-bottom:14px;margin-bottom:16px;gap:20px}
+.pv-logo{height:72px;max-width:220px;object-fit:contain;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pv-logo-fallback{font-size:27pt;font-weight:700;color:#2c4a7c}
+.pv-title-block{text-align:right}.pv-title{font-size:22pt;font-weight:700}.pv-meta{font-size:9.5pt;margin-top:4px;line-height:1.8}.pv-meta strong{font-weight:700}
+.pv-client-table{width:100%;margin-bottom:14px;border-collapse:collapse}.pv-client-table td{padding:3px 0;font-size:10pt}.pv-client-table .lbl{font-weight:700;width:75px}
+.pv-work-header{background:#2c4a7c!important;color:#fff!important;text-align:left;padding:6px 12px;font-size:9.5pt;font-weight:700}
+.pv-work-sub{background:#d8edda!important;text-align:left;padding:5px 12px;font-size:9pt;margin-bottom:14px}
+.pv-table{width:100%;border-collapse:collapse;margin-bottom:6px;table-layout:fixed}.pv-table thead{display:table-header-group}.pv-table th{background:#2c4a7c!important;color:#fff!important;padding:8px 10px;text-align:left;font-size:9pt}.pv-table td{padding:10px;border:1px solid #ccc;font-size:9.5pt;vertical-align:top;overflow-wrap:anywhere}.pv-table tr{break-inside:avoid;page-break-inside:avoid}
+.pv-table .tc{text-align:center}.pv-table .tr{text-align:right}.pv-table .w-qty{width:72px}.pv-table .w-price{width:130px}.pv-table .w-total{width:110px}
+.pv-total-row td{font-weight:700;border:none;border-top:2px solid #333;text-align:right;padding:10px 10px 4px}
+.pv-print-footer{margin-top:32px;text-align:center}.pv-thanks-line{font-weight:700;font-size:10pt;margin-bottom:12px}.pv-address-line{font-size:8.5pt;color:#555;border-top:1px solid #ccc;padding-top:8px}
+.print-actions{max-width:680px;margin:15px auto;text-align:center}.print-actions button{background:#2c4a7c;color:#fff;border:0;border-radius:6px;padding:12px 18px;font:bold 14px Arial;cursor:pointer}
+@page{size:letter;margin:14mm 16mm}
+@media print{
+  html,body{margin:0!important;padding:0!important;background:#fff!important}
+  .pv-wrap{max-width:680px;margin:0 auto;padding:0}
+  .print-actions{display:none!important}
+  .pv-print-footer{position:fixed;bottom:0;left:0;right:0;margin:0;padding:0 16mm;background:#fff}
+  .pv-table-wrap{margin-bottom:80px}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
+</style></head><body>
+<div class="print-actions"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>
+<div class="pv-wrap">
+  <div class="pv-top">
+    <div><img src="${safe(logoURL)}" class="pv-logo" alt="DUNAS" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="pv-logo-fallback" style="display:none">DUNAS</div></div>
+    <div class="pv-title-block"><div class="pv-title">Nota de Venta</div><div class="pv-meta"><strong>Fecha:&nbsp;</strong>${safe(fechaMX)}<br><strong>No. Pedido&nbsp;</strong>${safe(nota.pedido)}<br><strong>N.º de Venta:&nbsp;</strong>${safe(nota.folio)}</div></div>
+  </div>
+  <table class="pv-client-table"><tr><td class="lbl">Cliente:</td><td>${safe(nombreCliente)}</td></tr><tr><td class="lbl">Ciudad:</td><td>${safe(nota.clientes?.ciudad)}</td></tr><tr><td class="lbl">Tel:</td><td>${safe(nota.clientes?.telefono)}</td></tr></table>
+  <div class="pv-work-header">Trabajo</div><div class="pv-work-sub">${safe(nota.trabajo)}</div>
+  <div class="pv-table-wrap"><table class="pv-table"><thead><tr><th class="w-qty tc">Cantidad</th><th>Descripcion</th><th class="w-price tr">Precio por unidad</th><th class="w-total tr">Total</th></tr></thead>
+  <tbody>${detalles.map(d=>`<tr><td class="tc w-qty">${safe(d.cantidad)}</td><td><strong>${safe(d.modelos?.nombre)}</strong>${d.descripcion?'<br>'+safe(d.descripcion):''}</td><td class="tr w-price">$ ${numero(d.precio)}</td><td class="tr w-total">$ ${numero(d.total)}</td></tr>`).join('')}</tbody>
+  <tfoot><tr class="pv-total-row"><td colspan="3">Total:</td><td>$&nbsp;${numero(nota.total)}</td></tr></tfoot></table></div>
+  <div class="pv-print-footer"><div class="pv-thanks-line">Gracias por su confianza.</div><div class="pv-address-line">${safe(empresaDireccion)}</div></div>
+</div></body></html>`;
+    w.document.open();w.document.write(html);w.document.close();w.focus();
+  }catch(e){w.close();toast('Error al preparar impresión: '+e.message)}
+}
+
 function editDialog(table,item=null){state.editing={table,id:item?.id||null};$('edit-title').textContent=`${item?'Editar':'Nuevo'} ${table==='clientes'?'cliente':'modelo'}`;$('edit-fields').innerHTML=`<label>Nombre<input name="nombre" maxlength="120" required></label>`+(table==='clientes'?`<label>Ciudad<input name="ciudad" maxlength="120"></label><label>Teléfono<input name="telefono" maxlength="40"></label>`:'');for(const [key,value] of Object.entries(item||{})){const input=$('edit-fields').querySelector(`[name="${key}"]`);if(input)input.value=value??'';}$('edit-dialog').showModal();}
 async function saveDialog(e){e.preventDefault();const {table,id}=state.editing;const data=Object.fromEntries(new FormData($('edit-form')));try{await request(`/api/${table}${id?'/'+id:''}`,{method:id?'PUT':'POST',body:data});$('edit-dialog').close();await refresh();toast('Registro guardado');}catch(err){toast(err.message)}}
 async function remove(table,id){if(!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.'))return;try{await request(`/api/${table}/${id}`,{method:'DELETE'});await refresh();toast('Registro eliminado');}catch(err){toast(err.message)}}
