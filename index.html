@@ -13,7 +13,9 @@
 <section id="login-screen" class="login-screen">
   <form id="login-form" class="login-card">
     <img src="../logo.png" alt="DUNAS" class="logo" onerror="this.style.display='none'">
-    <h1>DUNAS</h1><p>Acceso a notas de venta</p>
+    
+<p>Acceso a notas de venta</p>
+
     <label>Usuario<input id="login-usuario" autocomplete="username" required></label>
     <label>Contraseña<input id="login-pass" type="password" autocomplete="current-password" required></label>
     <button type="submit" id="btn-login" class="primary">Entrar</button>
@@ -21,7 +23,7 @@
   </form>
 </section>
 <div id="app" hidden>
-<header class="topbar"><img src="../logo.png" alt="DUNAS" onerror="this.style.display='none'"><strong>DUNAS</strong><nav>
+<header class="topbar"><img src="../logo.png" alt="DUNAS" onerror="this.style.display='none'"><nav>
   <button data-view="notas">Historial</button><button data-view="editor">Nueva nota</button><button data-view="clientes">Clientes</button><button data-view="modelos">Modelos</button>
 </nav><span id="who"></span><button id="logout" class="muted">Salir</button></header>
 <main>
