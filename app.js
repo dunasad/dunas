@@ -47,7 +47,7 @@ async function printNote(){
     const numero=n=>Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
     const nombreCliente=nota.clientes?.nombre||'';
     const titulo=String(nota.folio||'NOTA').replace(/[^a-zA-Z0-9_-]/g,'')+'-'+String(nombreCliente).replace(/[\\/:*?"<>|]/g,'').slice(0,60);
-    const logoURL=new URL('../logo.png',window.location.href).href;
+    const logoURL=new URL('https://dunasad.github.io/dunas/logo.png',window.location.href).href;
     const empresaDireccion=DUNAS_CONFIG.EMPRESA_DIRECCION||'';
     const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safe(titulo)}</title>
 <style>
