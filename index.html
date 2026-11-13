@@ -12,9 +12,12 @@
 <div class="notice">DUNAS -- SISTEMA DE NOTAS</div>
 <section id="login-screen" class="login-screen">
   <form id="login-form" class="login-card">
-    <img src="../logo.png" alt="DUNAS" class="logo" onerror="this.style.display='none'">
-    
-<p>Acceso a notas de venta</p>
+  <img
+    src="https://dunasad.github.io/dunas/logo.png"
+    alt="Logo DUNAS"
+    class="logo"
+  >
+  <p>Acceso a notas de venta</p>
 
     <label>Usuario<input id="login-usuario" autocomplete="username" required></label>
     <label>Contraseña<input id="login-pass" type="password" autocomplete="current-password" required></label>
@@ -23,7 +26,12 @@
   </form>
 </section>
 <div id="app" hidden>
-<header class="topbar"><img src="../logo.png" alt="DUNAS" onerror="this.style.display='none'"><nav>
+<header class="topbar">
+  <img
+    src="https://dunasad.github.io/dunas/logo.png"
+    alt="Logo DUNAS"
+  >
+  <nav>
   <button data-view="notas">Historial</button><button data-view="editor">Nueva nota</button><button data-view="clientes">Clientes</button><button data-view="modelos">Modelos</button>
 </nav><span id="who"></span><button id="logout" class="muted">Salir</button></header>
 <main>
