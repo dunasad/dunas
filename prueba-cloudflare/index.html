@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DUNAS — Prueba Cloudflare</title>
+<link rel="icon" href="../favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script defer src="config.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+<div class="notice">VERSIÓN DE PRUEBA · Cloudflare D1 · No sustituye a la página original</div>
+<section id="login-screen" class="login-screen">
+  <form id="login-form" class="login-card">
+    <img src="../logo.png" alt="DUNAS" class="logo" onerror="this.style.display='none'">
+    <h1>DUNAS</h1><p>Acceso a notas de venta</p>
+    <label>Usuario<input id="login-usuario" autocomplete="username" required></label>
+    <label>Contraseña<input id="login-pass" type="password" autocomplete="current-password" required></label>
+    <button type="submit" id="btn-login" class="primary">Entrar</button>
+    <div id="login-error" class="error" role="alert"></div>
+  </form>
+</section>
+<div id="app" hidden>
+<header class="topbar"><img src="../logo.png" alt="DUNAS" onerror="this.style.display='none'"><strong>DUNAS</strong><nav>
+  <button data-view="notas">Historial</button><button data-view="editor">Nueva nota</button><button data-view="clientes">Clientes</button><button data-view="modelos">Modelos</button>
+</nav><span id="who"></span><button id="logout" class="muted">Salir</button></header>
+<main>
+<section id="view-notas" class="view"><div class="heading"><h2>Historial de notas</h2><button class="primary" id="new-from-list">+ Nueva nota</button></div><div class="panel table-wrap"><table><thead><tr><th>Folio</th><th>Pedido</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Acciones</th></tr></thead><tbody id="notes-body"></tbody></table></div></section>
+<section id="view-editor" class="view" hidden><div class="heading"><h2 id="editor-title">Nueva nota</h2><button id="back-to-list" class="muted">Volver</button></div><form id="note-form" class="panel"><div class="cols3"><label>Folio<input id="folio" readonly></label><label>No. pedido<input id="pedido" readonly></label><label>Fecha<input id="fecha" type="date" required></label></div><div class="cols2"><label>Cliente<select id="cliente" required></select></label><label>Trabajo<input id="trabajo" maxlength="500" value="Fabricacion de palas tejidas"></label></div><h3>Productos</h3><div id="items"></div><button type="button" id="add-item" class="muted">+ Agregar producto</button><div class="total">TOTAL: <span id="total">$ 0.00</span></div><div class="actions"><button type="submit" class="primary" id="save-note">Guardar nota</button><button type="button" class="muted" id="print-note">Imprimir / Guardar PDF</button></div></form></section>
+<section id="view-clientes" class="view" hidden><div class="heading"><h2>Clientes</h2><button id="add-client" class="primary">+ Agregar cliente</button></div><div class="panel table-wrap"><table><thead><tr><th>Nombre</th><th>Ciudad</th><th>Teléfono</th><th>Acciones</th></tr></thead><tbody id="clients-body"></tbody></table></div></section>
+<section id="view-modelos" class="view" hidden><div class="heading"><h2>Modelos</h2><button id="add-model" class="primary">+ Agregar modelo</button></div><div class="panel table-wrap"><table><thead><tr><th>Nombre</th><th>Acciones</th></tr></thead><tbody id="models-body"></tbody></table></div></section>
+</main></div>
+<dialog id="edit-dialog"><form id="edit-form"><h2 id="edit-title"></h2><div id="edit-fields"></div><div class="actions"><button type="button" id="cancel-edit" class="muted">Cancelar</button><button class="primary">Guardar</button></div></form></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+</body></html>
